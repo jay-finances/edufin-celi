@@ -1,5 +1,4 @@
-// utils.js — Fonctions partagées
-
+// utils.js — Fonctions partagées v2 (avec support groupes)
 import { auth, db } from './firebase-init.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, getDoc, updateDoc, serverTimestamp }
@@ -10,16 +9,11 @@ export function requireAuth(expectedRole, redirectTo = '../index.html') {
   return new Promise((resolve, reject) => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       unsub();
-      if (!user) {
-        window.location.href = redirectTo;
-        return reject('Non connecté');
-      }
+      if (!user) { window.location.href = redirectTo; return reject('Non connecté'); }
       const snap = await getDoc(doc(db, 'users', user.uid));
       if (!snap.exists() || snap.data().role !== expectedRole) {
-        window.location.href = redirectTo;
-        return reject('Rôle incorrect');
+        window.location.href = redirectTo; return reject('Rôle incorrect');
       }
-      // Mettre à jour lastLogin
       await updateDoc(doc(db, 'users', user.uid), {
         lastLogin: serverTimestamp(),
         loginCount: (snap.data().loginCount || 0) + 1
@@ -32,13 +26,11 @@ export function requireAuth(expectedRole, redirectTo = '../index.html') {
 // ── Formatage monétaire ───────────────────────────────────────────
 export function formatCAD(amount) {
   return new Intl.NumberFormat('fr-CA', {
-    style: 'currency',
-    currency: 'CAD',
-    minimumFractionDigits: 2
-  }).format(amount);
+    style: 'currency', currency: 'CAD', minimumFractionDigits: 2
+  }).format(amount || 0);
 }
 
-// ── Formatage date ────────────────────────────────────────────────
+// ── Formatage dates ───────────────────────────────────────────────
 export function formatDate(timestamp) {
   if (!timestamp) return '—';
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -69,7 +61,8 @@ export function showToast(message, type = 'info', duration = 3500) {
   toast.textContent = message;
   container.appendChild(toast);
   setTimeout(() => {
-    toast.style.animation = 'toast-out 300ms ease forwards';
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 300ms';
     setTimeout(() => toast.remove(), 300);
   }, duration);
 }
@@ -83,19 +76,67 @@ export async function logout() {
   window.location.href = '../index.html';
 }
 
-// ── Vérifier si un module est disponible ─────────────────────────
-export function isModuleAvailable(module) {
-  if (!module.unlockDate) return true;
-  const unlockDate = module.unlockDate.toDate
-    ? module.unlockDate.toDate()
-    : new Date(module.unlockDate);
+// ── Vérifier si un module est disponible (avec support groupes) ───
+export function isModuleAvailable(moduleConfig, userGroup) {
+  // Chercher la config spécifique au groupe d'abord
+  let cfg = null;
+
+  if (userGroup && moduleConfig[`group_${userGroup}`]) {
+    // Config spécifique au groupe de l'élève
+    cfg = moduleConfig[`group_${userGroup}`];
+  } else if (moduleConfig.default) {
+    // Config par défaut (tous les groupes)
+    cfg = moduleConfig.default;
+  } else {
+    // Ancienne structure — compatibilité rétroactive
+    cfg = moduleConfig;
+  }
+
+  if (!cfg || !cfg.unlockDate) return true; // Pas de date = disponible
+
+  const unlockDate = cfg.unlockDate.toDate
+    ? cfg.unlockDate.toDate()
+    : new Date(cfg.unlockDate);
+
   return new Date() >= unlockDate;
+}
+
+// ── Obtenir la récompense d'un module (avec support groupes) ──────
+export function getModuleReward(moduleConfig, moduleId, userGroup) {
+  const defaults = { ch1:250, ch2:250, ch3:300, ch4:300, ch5:500 };
+
+  let cfg = null;
+  if (userGroup && moduleConfig[`group_${userGroup}`]?.[moduleId]) {
+    cfg = moduleConfig[`group_${userGroup}`][moduleId];
+  } else if (moduleConfig.default?.[moduleId]) {
+    cfg = moduleConfig.default[moduleId];
+  } else if (moduleConfig[moduleId]) {
+    // Ancienne structure
+    cfg = moduleConfig[moduleId];
+  }
+
+  return cfg?.reward || defaults[moduleId] || 250;
+}
+
+// ── Obtenir la date de déverrouillage lisible ─────────────────────
+export function getUnlockDate(moduleConfig, moduleId, userGroup) {
+  let cfg = null;
+  if (userGroup && moduleConfig[`group_${userGroup}`]?.[moduleId]) {
+    cfg = moduleConfig[`group_${userGroup}`][moduleId];
+  } else if (moduleConfig.default?.[moduleId]) {
+    cfg = moduleConfig.default[moduleId];
+  } else if (moduleConfig[moduleId]) {
+    cfg = moduleConfig[moduleId];
+  }
+
+  if (!cfg?.unlockDate) return null;
+  return cfg.unlockDate.toDate ? cfg.unlockDate.toDate() : new Date(cfg.unlockDate);
 }
 
 // ── Initialiser la topbar ─────────────────────────────────────────
 export function initTopbar(userData) {
-  const nameEl = document.getElementById('topbar-username');
-  const avatarEl = document.getElementById('topbar-avatar');
+  const nameEl    = document.getElementById('topbar-username');
+  const avatarEl  = document.getElementById('topbar-avatar');
   const balanceEl = document.getElementById('topbar-balance');
   const logoutBtn = document.getElementById('btn-logout');
 
