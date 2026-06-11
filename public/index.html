@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ÉduFin — Simulation CELI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body class="login-page">
+
+  <div class="login-container">
+    <div class="login-brand">
+      <div class="brand-mark">
+        <span class="brand-dollar">$</span>
+      </div>
+      <h1 class="brand-name">ÉduFin</h1>
+      <p class="brand-tagline">Simulation CELI · Éducation financière</p>
+    </div>
+
+    <div class="login-card">
+      <div class="login-tabs">
+        <button class="tab-btn active" data-tab="eleve">Je suis élève</button>
+        <button class="tab-btn" data-tab="enseignant">Enseignant</button>
+      </div>
+
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="email">Adresse courriel</label>
+          <input type="email" id="email" placeholder="ton.nom@ecole.ca" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+        <div id="login-error" class="error-msg" style="display:none;"></div>
+        <button type="submit" class="btn-primary" id="login-btn">
+          <span class="btn-text">Connexion</span>
+          <span class="btn-loader" style="display:none;">⟳</span>
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <p>Première connexion? Contacte ton enseignant pour obtenir tes accès.</p>
+      </div>
+    </div>
+
+    <div class="login-ticker">
+      <div class="ticker-label">MARCHÉ</div>
+      <div class="ticker-track">
+        <span class="ticker-item">SHOP.TO <em class="up">+2.4%</em></span>
+        <span class="ticker-item">RY.TO <em class="down">-0.8%</em></span>
+        <span class="ticker-item">ENB.TO <em class="up">+1.1%</em></span>
+        <span class="ticker-item">TD.TO <em class="down">-0.3%</em></span>
+        <span class="ticker-item">CNR.TO <em class="up">+0.6%</em></span>
+        <span class="ticker-item">BCE.TO <em class="down">-1.2%</em></span>
+        <span class="ticker-item">AAPL <em class="up">+0.9%</em></span>
+        <span class="ticker-item">MSFT <em class="up">+1.7%</em></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module" src="js/firebase-init.js"></script>
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Console enseignant — ÉduFin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .teacher-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-soft);
+      transition: all var(--transition);
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .teacher-nav-item:hover { background: var(--surface); color: var(--text); }
+    .teacher-nav-item.active {
+      background: rgba(0,200,150,0.1);
+      color: var(--accent-dim);
+      font-weight: 600;
+    }
+    .section-panel { display: none; }
+    .section-panel.visible { display: block; }
+
+    .module-unlock-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--surface);
+    }
+    .module-unlock-row:last-child { border-bottom: none; }
+
+    .date-input {
+      padding: 8px 12px;
+      border: 1.5px solid var(--slate-light);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 13px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .date-input:focus { border-color: var(--accent); }
+
+    .add-student-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: var(--surface);
+      border-radius: var(--radius-md);
+    }
+
+    .q-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 24px;
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      margin-bottom: 24px;
+    }
+    .q-form textarea {
+      padding: 12px 16px;
+      border: 1.5px solid var(--slate-light);
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-size: 14px;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+    }
+    .q-form textarea:focus { border-color: var(--accent); }
+    .q-form select, .q-form input[type="text"] {
+      padding: 10px 14px;
+      border: 1.5px solid var(--slate-light);
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-size: 14px;
+      outline: none;
+    }
+    .q-form select:focus, .q-form input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .chip-green { background: rgba(0,200,150,0.1); color: var(--accent-dim); }
+    .chip-orange { background: rgba(244,166,35,0.15); color: var(--warn); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">$</div>
+      <span class="topbar-name">ÉduFin</span>
+      <span style="margin-left:8px; font-size:12px; background:rgba(244,166,35,0.2); color:var(--warn); padding:3px 10px; border-radius:20px; font-weight:600;">ENSEIGNANT</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="user-avatar" id="topbar-avatar">P</div>
+        <span class="user-name" id="topbar-username">Professeur</span>
+      </div>
+      <button class="btn-logout" id="btn-logout">Déconnexion</button>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section-title">Console</div>
+    <button class="teacher-nav-item active" data-section="students">
+      <span>👥</span> Élèves
+    </button>
+    <button class="teacher-nav-item" data-section="modules">
+      <span>🗓️</span> Modules & dates
+    </button>
+    <button class="teacher-nav-item" data-section="questions">
+      <span>❓</span> Banque de questions
+    </button>
+    <button class="teacher-nav-item" data-section="transactions">
+      <span>💰</span> Transactions CELI
+    </button>
+    <div class="sidebar-section-title" style="margin-top:16px;">Accès rapide</div>
+    <button class="teacher-nav-item" id="btn-add-funds-quick">
+      <span>➕</span> Ajouter des fonds
+    </button>
+  </nav>
+
+  <!-- Contenu -->
+  <main class="main-content">
+
+    <!-- ── SECTION ÉLÈVES ── -->
+    <div id="section-students" class="section-panel visible">
+      <div class="flex-between mb-28">
+        <h2 style="font-size:24px; font-weight:700;">Mes élèves</h2>
+        <button class="btn-primary" id="btn-show-add-student"
+          style="width:auto; padding:10px 20px; font-size:14px;">
+          + Ajouter un élève
+        </button>
+      </div>
+
+      <!-- Formulaire ajout élève -->
+      <div id="add-student-form" class="add-student-form" style="display:none;">
+        <div class="form-group">
+          <label>Prénom et nom</label>
+          <input type="text" id="new-student-name" placeholder="Marie Tremblay">
+        </div>
+        <div class="form-group">
+          <label>Courriel</label>
+          <input type="email" id="new-student-email" placeholder="marie.t@ecole.ca">
+        </div>
+        <div class="form-group">
+          <label>Mot de passe initial</label>
+          <input type="text" id="new-student-password" placeholder="Minimum 6 caractères">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <label>&nbsp;</label>
+          <button class="btn-primary" id="btn-create-student"
+            style="width:auto; padding:10px 16px; font-size:13px;">
+            Créer le compte
+          </button>
+        </div>
+        <div id="add-student-error" class="error-msg" style="display:none; grid-column:1/-1;"></div>
+      </div>
+
+      <!-- Tableau élèves -->
+      <div class="card">
+        <div style="margin-bottom:16px; display:flex; gap:12px; align-items:center;">
+          <input type="text" id="student-search" placeholder="🔍  Rechercher un élève..."
+            style="flex:1; padding:10px 14px; border:1.5px solid var(--slate-light);
+                   border-radius:var(--radius-md); font-family:var(--font-display);
+                   font-size:14px; outline:none;">
+          <span id="student-count" class="text-muted">0 élève(s)</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="teacher-table" id="students-table">
+            <thead>
+              <tr>
+                <th>Élève</th>
+                <th>Dernière connexion</th>
+                <th>Progression</th>
+                <th>Solde CELI</th>
+                <th>Score moyen</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="students-tbody">
+              <tr><td colspan="6" style="text-align:center; color:var(--slate); padding:32px;">
+                Chargement...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION MODULES & DATES ── -->
+    <div id="section-modules" class="section-panel">
+      <h2 style="font-size:24px; font-weight:700; margin-bottom:8px;">Modules et dates de déverrouillage</h2>
+      <p class="text-muted mb-28">
+        Définis la date à partir de laquelle chaque module devient accessible pour tous les élèves.
+        Un module sans date est immédiatement disponible.
+      </p>
+      <div class="card">
+        <div id="module-dates-list">Chargement...</div>
+        <div style="margin-top:24px; text-align:right;">
+          <button class="btn-primary" id="btn-save-dates"
+            style="width:auto; padding:12px 28px;">
+            Enregistrer les dates
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION BANQUE DE QUESTIONS ── -->
+    <div id="section-questions" class="section-panel">
+      <div class="flex-between mb-20">
+        <h2 style="font-size:24px; font-weight:700;">Banque de questions</h2>
+        <button class="btn-primary" id="btn-show-add-q"
+          style="width:auto; padding:10px 20px; font-size:14px;">
+          + Nouvelle question
+        </button>
+      </div>
+
+      <!-- Formulaire ajout question -->
+      <div id="add-q-form" class="q-form" style="display:none;">
+        <h3 style="font-size:16px; font-weight:700;">Nouvelle question</h3>
+        <div class="form-group">
+          <label>Chapitre</label>
+          <select id="q-chapter">
+            <option value="ch1">Chapitre 1 — La consommation</option>
+            <option value="ch2">Chapitre 2 — Le rôle de l'État</option>
+            <option value="ch3">Chapitre 3 — Le crédit</option>
+            <option value="ch4">Chapitre 4 — Le budget</option>
+            <option value="ch5">Chapitre 5 — L'épargne</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Question</label>
+          <textarea id="q-text-input" placeholder="Saisissez la question ici..."></textarea>
+        </div>
+        <div>
+          <label style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text);">
+            Options de réponse (4 choix)
+          </label>
+          <div class="options-grid" style="margin-top:10px;">
+            <input type="text" id="q-opt-0" placeholder="Option A">
+            <input type="text" id="q-opt-1" placeholder="Option B">
+            <input type="text" id="q-opt-2" placeholder="Option C">
+            <input type="text" id="q-opt-3" placeholder="Option D">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Bonne réponse</label>
+          <select id="q-correct">
+            <option value="0">Option A</option>
+            <option value="1">Option B</option>
+            <option value="2">Option C</option>
+            <option value="3">Option D</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Explication (affichée après la réponse)</label>
+          <textarea id="q-explanation-input" placeholder="Pourquoi cette réponse est correcte..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Source (optionnel)</label>
+          <input type="text" id="q-source" placeholder="Ex: La Presse, Nicolas Bérubé, 2024">
+        </div>
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+          <button class="btn-secondary" id="btn-cancel-q">Annuler</button>
+          <button class="btn-primary" id="btn-save-q"
+            style="width:auto; padding:10px 24px;">
+            Enregistrer la question
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtre et liste -->
+      <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+        <button class="btn-secondary active" data-filter="all"
+          style="font-size:13px; padding:8px 16px;" id="filter-all">Toutes</button>
+        <button class="btn-secondary" data-filter="ch1"
+          style="font-size:13px; padding:8px 16px;">Ch. 1</button>
+        <button class="btn-secondary" data-filter="ch2"
+          style="font-size:13px; padding:8px 16px;">Ch. 2</button>
+        <button class="btn-secondary" data-filter="ch3"
+          style="font-size:13px; padding:8px 16px;">Ch. 3</button>
+        <button class="btn-secondary" data-filter="ch4"
+          style="font-size:13px; padding:8px 16px;">Ch. 4</button>
+        <button class="btn-secondary" data-filter="ch5"
+          style="font-size:13px; padding:8px 16px;">Ch. 5</button>
+        <span id="q-total" class="text-muted" style="align-self:center;"></span>
+      </div>
+
+      <div id="questions-list">
+        <p class="text-muted" style="text-align:center; padding:32px;">Chargement...</p>
+      </div>
+    </div>
+
+    <!-- ── SECTION TRANSACTIONS ── -->
+    <div id="section-transactions" class="section-panel">
+      <h2 style="font-size:24px; font-weight:700; margin-bottom:8px;">Transactions CELI</h2>
+      <p class="text-muted mb-28">Historique des fonds crédités à chaque élève.</p>
+      <div class="card">
+        <table class="teacher-table" id="transactions-table">
+          <thead>
+            <tr>
+              <th>Élève</th>
+              <th>Type</th>
+              <th>Montant</th>
+              <th>Description</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="transactions-tbody">
+            <tr><td colspan="5" style="text-align:center; padding:32px; color:var(--slate);">
+              Chargement...
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal ajout de fonds -->
+<div id="modal-funds" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <h3 class="modal-title">💰 Ajouter des fonds CELI</h3>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Élève</label>
+      <select id="modal-student-select" style="padding:10px 14px; border:1.5px solid var(--slate-light); border-radius:var(--radius-md); font-family:var(--font-display); font-size:14px; width:100%; outline:none;"></select>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Montant ($)</label>
+      <input type="number" id="modal-amount" value="100" min="1" max="10000"
+        style="padding:10px 14px; border:1.5px solid var(--slate-light); border-radius:var(--radius-md); font-family:var(--font-display); font-size:14px; width:100%; outline:none;">
+    </div>
+    <div class="form-group">
+      <label>Raison</label>
+      <input type="text" id="modal-reason" placeholder="Ex: Participation au débat, travail remis..."
+        style="padding:10px 14px; border:1.5px solid var(--slate-light); border-radius:var(--radius-md); font-family:var(--font-display); font-size:14px; width:100%; outline:none;">
+    </div>
+    <div id="modal-funds-error" class="error-msg" style="display:none; margin-top:12px;"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btn-cancel-funds">Annuler</button>
+      <button class="btn-primary" id="btn-confirm-funds"
+        style="width:auto; padding:10px 24px;">Créditer</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="../js/firebase-init.js"></script>
+<script type="module" src="../js/teacher-dashboard.js"></script>
+</body>
+</html>

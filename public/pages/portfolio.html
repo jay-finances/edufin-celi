@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon portefeuille — ÉduFin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .portfolio-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .holding-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--surface);
+    }
+    .holding-row:last-child { border-bottom: none; }
+    .holding-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--marine);
+    }
+    .gain-positive { color: var(--accent-dim); }
+    .gain-negative { color: var(--danger); }
+    .chart-container {
+      height: 200px;
+      position: relative;
+    }
+    .history-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--surface);
+      font-size: 14px;
+    }
+    .history-row:last-child { border-bottom: none; }
+    .tx-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .tx-icon.buy { background: rgba(0,200,150,0.1); }
+    .tx-icon.sell { background: rgba(232,68,90,0.1); }
+    .tx-icon.credit { background: rgba(244,166,35,0.1); }
+    .empty-portfolio {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .empty-portfolio-icon { font-size: 64px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <header class="topbar">
+    <a href="student-dashboard.html" class="topbar-brand">
+      <div class="topbar-logo">$</div>
+      <span class="topbar-name">ÉduFin</span>
+    </a>
+    <div class="topbar-right">
+      <div class="celi-balance-pill">
+        <span class="celi-balance-label">CELI disponible</span>
+        <span class="celi-balance-amount" id="topbar-balance">0,00 $</span>
+      </div>
+      <div class="user-pill">
+        <div class="user-avatar" id="topbar-avatar">?</div>
+        <span class="user-name" id="topbar-username">...</span>
+      </div>
+      <button class="btn-logout" id="btn-logout">Déconnexion</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <a class="nav-item" href="student-dashboard.html"><span class="nav-icon">🏠</span> Tableau de bord</a>
+    <a class="nav-item" href="modules.html"><span class="nav-icon">📚</span> Modules</a>
+    <a class="nav-item" href="market.html"><span class="nav-icon">📈</span> Marché boursier</a>
+    <a class="nav-item active" href="portfolio.html"><span class="nav-icon">💼</span> Mon portefeuille</a>
+  </nav>
+
+  <main class="main-content">
+
+    <div class="flex-between mb-28">
+      <h2 style="font-size:26px; font-weight:700;">Mon portefeuille CELI</h2>
+      <a href="market.html" class="btn-primary"
+        style="text-decoration:none; width:auto; padding:10px 20px; font-size:14px;">
+        + Investir
+      </a>
+    </div>
+
+    <!-- Résumé -->
+    <div class="portfolio-summary" id="portfolio-summary">
+      <div class="stat-card">
+        <div class="stat-label">Valeur des placements</div>
+        <div class="stat-value font-mono" id="stat-invested">—</div>
+        <div class="stat-sub">Actions en portefeuille</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Liquidités disponibles</div>
+        <div class="stat-value green font-mono" id="stat-cash">—</div>
+        <div class="stat-sub">Prêt à investir</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Valeur totale CELI</div>
+        <div class="stat-value font-mono" id="stat-total">—</div>
+        <div class="stat-sub">Placements + liquidités</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Gain / Perte non réalisé</div>
+        <div class="stat-value font-mono" id="stat-gain">—</div>
+        <div class="stat-sub" id="stat-gain-pct">Par rapport au coût d'achat</div>
+      </div>
+    </div>
+
+    <!-- Positions ouvertes -->
+    <div class="card mb-28">
+      <h3 class="card-title">Mes positions</h3>
+      <div id="holdings-container">
+        <div style="text-align:center; padding:20px; color:var(--slate);">Chargement...</div>
+      </div>
+    </div>
+
+    <!-- Historique des transactions -->
+    <div class="card">
+      <h3 class="card-title">Historique des transactions</h3>
+      <div id="history-container">
+        <div style="text-align:center; padding:20px; color:var(--slate);">Chargement...</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script type="module" src="../js/firebase-init.js"></script>
+<script type="module" src="../js/portfolio.js"></script>
+</body>
+</html>

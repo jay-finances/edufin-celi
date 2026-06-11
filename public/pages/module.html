@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module — ÉduFin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .capsule-content {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+    .capsule-content h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 24px 0 12px;
+      color: var(--marine);
+    }
+    .capsule-content p { margin-bottom: 16px; }
+    .capsule-content ul { padding-left: 20px; margin-bottom: 16px; }
+    .capsule-content li { margin-bottom: 8px; }
+    .capsule-content .highlight-box {
+      background: rgba(0,200,150,0.08);
+      border-left: 3px solid var(--accent);
+      padding: 16px 20px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin: 20px 0;
+      font-style: italic;
+    }
+    .capsule-content .key-concept {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin: 16px 0;
+    }
+    .capsule-content .key-concept strong {
+      color: var(--accent-dim);
+      font-weight: 700;
+    }
+    .phase-indicator {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .phase-step {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--slate-light);
+      transition: background 400ms;
+    }
+    .phase-step.active { background: var(--accent); }
+    .phase-step.done { background: var(--accent-dim); }
+
+    .reward-banner {
+      background: linear-gradient(135deg, var(--marine), var(--marine-mid));
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      text-align: center;
+      color: var(--white);
+      margin-bottom: 24px;
+    }
+    .reward-amount {
+      font-family: var(--font-mono);
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--accent);
+      display: block;
+      margin: 12px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+  <header class="topbar">
+    <a href="student-dashboard.html" class="topbar-brand">
+      <div class="topbar-logo">$</div>
+      <span class="topbar-name">ÉduFin</span>
+    </a>
+    <div class="topbar-right">
+      <div class="celi-balance-pill">
+        <span class="celi-balance-label">CELI</span>
+        <span class="celi-balance-amount" id="topbar-balance">0,00 $</span>
+      </div>
+      <div class="user-pill">
+        <div class="user-avatar" id="topbar-avatar">?</div>
+        <span class="user-name" id="topbar-username">...</span>
+      </div>
+      <button class="btn-logout" id="btn-logout">Déconnexion</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <a class="nav-item" href="student-dashboard.html">
+      <span class="nav-icon">←</span> Retour au tableau de bord
+    </a>
+    <div class="sidebar-section-title" style="margin-top:16px;">Modules</div>
+    <div id="sidebar-modules"><!-- Généré --></div>
+  </nav>
+
+  <main class="main-content">
+
+    <!-- Phase indicator -->
+    <div class="phase-indicator">
+      <div class="phase-step" id="phase-capsule"></div>
+      <div class="phase-step" id="phase-quiz"></div>
+      <div class="phase-step" id="phase-result"></div>
+    </div>
+
+    <!-- Zone principale -->
+    <div id="module-locked" style="display:none;">
+      <div class="card" style="text-align:center; padding:48px;">
+        <div style="font-size:64px; margin-bottom:16px;">🔒</div>
+        <h2 style="font-size:24px; font-weight:700; margin-bottom:8px;">Module verrouillé</h2>
+        <p class="text-muted" id="locked-msg">Ce module sera disponible prochainement.</p>
+        <a href="student-dashboard.html" class="btn-primary" style="display:inline-block; margin-top:24px; text-decoration:none;">
+          Retour au tableau de bord
+        </a>
+      </div>
+    </div>
+
+    <div id="module-completed-msg" style="display:none;">
+      <div class="card" style="text-align:center; padding:48px;">
+        <div style="font-size:64px; margin-bottom:16px;">✅</div>
+        <h2 style="font-size:24px; font-weight:700; margin-bottom:8px;">Module déjà complété!</h2>
+        <p class="text-muted" id="completed-score-msg">Tu as réussi ce quiz.</p>
+        <div style="display:flex; gap:12px; justify-content:center; margin-top:24px;">
+          <a href="modules.html" class="btn-primary" style="text-decoration:none;">
+            Voir tous les modules
+          </a>
+          <button class="btn-secondary" id="btn-redo">Revoir la capsule</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 1 : Capsule pédagogique -->
+    <div id="phase-capsule-content" style="display:none;">
+      <div class="card mb-28">
+        <div class="flex-between mb-20">
+          <div>
+            <span id="capsule-tag" style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--accent-dim);">Chapitre —</span>
+            <h2 id="capsule-title" style="font-size:24px; font-weight:700; margin-top:6px;">Chargement...</h2>
+          </div>
+          <span id="capsule-icon" style="font-size:40px;"></span>
+        </div>
+        <div class="capsule-content" id="capsule-body">
+          <!-- Contenu du module -->
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <button class="btn-primary" id="btn-start-quiz" style="display:inline-block; width:auto; padding:14px 32px;">
+          Passer au quiz →
+        </button>
+      </div>
+    </div>
+
+    <!-- Phase 2 : Quiz -->
+    <div id="phase-quiz-content" style="display:none;">
+      <div class="card">
+        <div class="flex-between mb-20">
+          <h3 id="quiz-module-title" style="font-size:18px; font-weight:700;">Quiz — Chapitre</h3>
+          <span id="quiz-counter" class="text-muted">Question 1 / 10</span>
+        </div>
+
+        <div class="quiz-progress-bar">
+          <div class="quiz-progress-fill" id="quiz-progress" style="width:10%;"></div>
+        </div>
+
+        <div class="quiz-container">
+          <div class="quiz-question">
+            <div class="quiz-question-num" id="q-num">Question 1</div>
+            <div class="quiz-question-text" id="q-text">Chargement...</div>
+          </div>
+
+          <div class="quiz-options" id="q-options">
+            <!-- Options générées par JS -->
+          </div>
+
+          <div class="quiz-explanation" id="q-explanation"></div>
+
+          <div class="quiz-nav">
+            <div id="quiz-score-display" class="text-muted" style="font-size:13px;">Score : 0 / 0</div>
+            <button class="btn-primary" id="btn-next-q"
+              style="width:auto; padding:12px 28px; display:none;">
+              Question suivante →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3 : Résultat -->
+    <div id="phase-result-content" style="display:none;">
+      <div class="reward-banner">
+        <div style="font-size:14px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--accent);">
+          Module complété!
+        </div>
+        <span class="reward-amount" id="result-reward">+250 $</span>
+        <p style="color:var(--slate-light);">ont été déposés dans ton CELI virtuel</p>
+      </div>
+
+      <div class="card" style="text-align:center; padding:40px;">
+        <div style="font-size:64px; margin-bottom:16px;" id="result-emoji">🎉</div>
+        <h2 class="result-title" id="result-title">Excellent travail!</h2>
+        <p class="result-subtitle" id="result-msg">Tu as complété le module avec succès.</p>
+
+        <div style="display:inline-flex; align-items:center; gap:16px;
+             background:var(--surface); border-radius:var(--radius-lg);
+             padding:20px 32px; margin:24px 0;">
+          <div>
+            <div class="stat-label">Score obtenu</div>
+            <div class="stat-value font-mono" id="result-score">—</div>
+          </div>
+          <div style="width:1px; height:40px; background:var(--slate-light);"></div>
+          <div>
+            <div class="stat-label">Nouveau solde CELI</div>
+            <div class="stat-value green font-mono" id="result-new-balance">—</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+          <a href="modules.html" class="btn-primary" style="text-decoration:none; width:auto; padding:14px 28px;">
+            Voir mes modules
+          </a>
+          <a href="student-dashboard.html" class="btn-secondary" style="text-decoration:none;">
+            Tableau de bord
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script type="module" src="../js/firebase-init.js"></script>
+<script type="module" src="../js/module.js"></script>
+</body>
+</html>

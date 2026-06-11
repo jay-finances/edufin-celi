@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glossaire — ÉduFin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .glossary-search {
+      width: 100%;
+      padding: 14px 20px;
+      border: 1.5px solid var(--slate-light);
+      border-radius: var(--radius-lg);
+      font-family: var(--font-display);
+      font-size: 16px;
+      outline: none;
+      margin-bottom: 24px;
+      transition: border-color var(--transition);
+    }
+    .glossary-search:focus { border-color: var(--accent); }
+
+    .glossary-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .term-card {
+      background: var(--white);
+      border: 1.5px solid var(--slate-light);
+      border-radius: var(--radius-md);
+      padding: 18px 22px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .term-card:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+    .term-card.expanded { border-color: var(--accent); }
+
+    .term-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .term-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .term-chapter {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+    .term-def {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-soft);
+      margin-top: 12px;
+      display: none;
+    }
+    .term-card.expanded .term-def { display: block; }
+    .term-example {
+      font-size: 13px;
+      color: var(--text-soft);
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-top: 10px;
+      font-style: italic;
+    }
+    .term-example strong { color: var(--accent-dim); font-style: normal; }
+    .arrow-icon {
+      font-size: 16px;
+      color: var(--slate);
+      transition: transform var(--transition);
+    }
+    .term-card.expanded .arrow-icon { transform: rotate(180deg); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <header class="topbar">
+    <a href="student-dashboard.html" class="topbar-brand">
+      <div class="topbar-logo">$</div>
+      <span class="topbar-name">ÉduFin</span>
+    </a>
+    <div class="topbar-right">
+      <div class="celi-balance-pill">
+        <span class="celi-balance-label">CELI</span>
+        <span class="celi-balance-amount" id="topbar-balance">0,00 $</span>
+      </div>
+      <div class="user-pill">
+        <div class="user-avatar" id="topbar-avatar">?</div>
+        <span class="user-name" id="topbar-username">...</span>
+      </div>
+      <button class="btn-logout" id="btn-logout">Déconnexion</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <a class="nav-item" href="student-dashboard.html"><span class="nav-icon">🏠</span> Tableau de bord</a>
+    <a class="nav-item" href="modules.html"><span class="nav-icon">📚</span> Modules</a>
+    <a class="nav-item" href="market.html"><span class="nav-icon">📈</span> Marché boursier</a>
+    <a class="nav-item" href="portfolio.html"><span class="nav-icon">💼</span> Portefeuille</a>
+    <a class="nav-item active" href="glossary.html"><span class="nav-icon">📖</span> Glossaire</a>
+  </nav>
+
+  <main class="main-content">
+    <div class="flex-between mb-28">
+      <div>
+        <h2 style="font-size:26px; font-weight:700;">Glossaire financier</h2>
+        <p class="text-muted" style="margin-top:4px;">
+          <span id="term-count">0</span> termes · Clique sur un terme pour voir sa définition
+        </p>
+      </div>
+    </div>
+
+    <input type="text" class="glossary-search" id="glossary-search"
+      placeholder="🔍  Rechercher un terme (ex: CELI, dividende, intérêt composé…)">
+
+    <div class="glossary-filters">
+      <button class="filter-chip active" data-ch="all">Tous</button>
+      <button class="filter-chip" data-ch="ch1">🛒 Consommation</button>
+      <button class="filter-chip" data-ch="ch2">⚖️ État & Prix</button>
+      <button class="filter-chip" data-ch="ch3">💳 Crédit</button>
+      <button class="filter-chip" data-ch="ch4">📊 Budget</button>
+      <button class="filter-chip" data-ch="ch5">📈 Épargne</button>
+    </div>
+
+    <div id="glossary-list"></div>
+  </main>
+</div>
+
+<script type="module" src="../js/firebase-init.js"></script>
+<script type="module">
+import { requireAuth, initTopbar } from '../js/utils.js';
+
+const TERMS = [
+  // Ch1 — Consommation
+  { ch:'ch1', term:'Consommation', def:'Action d\'utiliser ou d\'acheter des biens et services pour satisfaire des besoins. Dans une économie moderne, elle est le principal moteur de la croissance économique.', example:'Acheter une paire de souliers ou souscrire à Netflix sont des actes de consommation.' },
+  { ch:'ch1', term:'Pyramide de Maslow', def:'Théorie du psychologue Abraham Maslow (1908-1970) qui hiérarchise les besoins humains en 5 niveaux : physiologiques, sécurité, appartenance, estime et accomplissement. Les besoins fondamentaux doivent être comblés avant de pouvoir pleinement poursuivre les niveaux supérieurs.', example:'Avant de penser à acheter la dernière PlayStation (besoin d\'appartenance/estime), il faut se nourrir et avoir un logement sécuritaire.' },
+  { ch:'ch1', term:'Consumérisme', def:'Mode de vie axé sur la consommation comme fin en soi. Le consommateur achète non par nécessité réelle, mais pour s\'identifier socialement, suivre les tendances ou combler un vide émotionnel.', example:'Acheter un iPhone à 1 500 $ pour être "dans la tendance" plutôt que parce que son téléphone actuel est brisé.' },
+  { ch:'ch1', term:'Fast fashion', def:'Modèle de l\'industrie du vêtement basé sur un renouvellement très rapide des collections pour rendre obsolète ce qui est "à la mode". Favorise la surconsommation et génère d\'énormes quantités de déchets.', example:'Des marques comme Zara ou H&M lancent de nouvelles collections presque chaque semaine.' },
+  { ch:'ch1', term:'Retail therapy', def:'Pratique consistant à faire des achats non planifiés dans le but d\'améliorer son humeur ou de contrer des émotions négatives comme le stress ou la tristesse. Peut mener à l\'endettement si pratiquée de façon excessive.', example:'Aller magasiner après une mauvaise journée à l\'école pour se "remonter le moral".' },
+  { ch:'ch1', term:'Capitalisme de surveillance', def:'Système par lequel les géants technologiques (GAFAM) collectent et analysent des milliards de données personnelles pour personnaliser la publicité et anticiper les comportements d\'achat.', example:'Facebook et Google analysent tes recherches, clics et habitudes pour te montrer des publicités ciblées.' },
+  { ch:'ch1', term:'Pouvoir d\'achat', def:'Capacité financière d\'un individu ou d\'un ménage à se procurer des biens et services. Il est déterminé par le revenu disponible après impôts et contributions.', example:'Si ton salaire reste le même mais que les prix augmentent (inflation), ton pouvoir d\'achat diminue.' },
+  { ch:'ch1', term:'Revenu disponible', def:'Somme d\'argent restante après déduction des impôts et des contributions obligatoires. C\'est l\'argent qu\'on peut librement consommer ou épargner.', example:'Revenu disponible = Salaire brut − impôts − cotisations au régime de retraite − assurance-emploi.' },
+
+  // Ch2 — État & Prix
+  { ch:'ch2', term:'TPS', def:'Taxe sur les produits et services. Taxe fédérale canadienne de 5 % appliquée à la plupart des biens et services. Perçue par le gouvernement fédéral pour financer les services publics nationaux.', example:'Sur un achat de 100 $, la TPS ajoute 5 $, portant la facture à 105 $.' },
+  { ch:'ch2', term:'TVQ', def:'Taxe de vente du Québec. Taxe provinciale de 9,975 % appliquée en plus de la TPS sur la plupart des achats au Québec.', example:'Sur 100 $ : TPS (5 $) + TVQ (9,975 $) = 114,975 $ au total.' },
+  { ch:'ch2', term:'Prix d\'équilibre', def:'Prix auquel la quantité de biens offerte par les producteurs est exactement égale à la quantité demandée par les consommateurs. C\'est le mécanisme central du marché libre.', example:'Si tout le monde veut des masques N95 pendant une pandémie, la demande monte, l\'offre ne suit pas → le prix monte jusqu\'à un nouvel équilibre.' },
+  { ch:'ch2', term:'Garantie légale', def:'Protection automatique et gratuite prévue par la Loi sur la protection du consommateur du Québec. Elle oblige le vendeur à fournir un bien exempt de vices cachés et d\'une durabilité raisonnable selon son prix.', example:'Si ton frigo de 1 200 $ tombe en panne après 11 mois, la garantie légale te protège même si la garantie du fabricant est expirée.' },
+  { ch:'ch2', term:'Oligopole', def:'Structure de marché dominée par un petit nombre de grandes entreprises puissantes. La concurrence y est limitée et les prix sont souvent élevés.', example:'Les télécommunications au Canada (Bell, Rogers, Telus) forment un oligopole — d\'où les tarifs de cellulaires élevés.' },
+  { ch:'ch2', term:'Inflation', def:'Hausse généralisée et durable du niveau des prix dans l\'économie. Elle réduit le pouvoir d\'achat : avec le même argent, on peut acheter moins.', example:'Si l\'inflation est de 3 % par an et que ton salaire n\'augmente pas, tu peux te payer 3 % de moins chaque année.' },
+  { ch:'ch2', term:'Indice des prix à la consommation (IPC)', def:'Indicateur statistique qui mesure la variation du coût d\'un panier représentatif de biens et services d\'une année à l\'autre. Principal outil de mesure de l\'inflation.', example:'Si le panier de référence coûtait 1 000 $ l\'an dernier et 1 035 $ cette année, l\'inflation est de 3,5 %.' },
+
+  // Ch3 — Crédit
+  { ch:'ch3', term:'Cote de crédit', def:'Score numérique (généralement de 300 à 900) calculé par des agences comme Equifax et TransUnion, qui mesure ta fiabilité en tant qu\'emprunteur. Plus elle est haute, plus tu obtiens de bons taux.', example:'Une cote de 750+ est excellente. Une cote de 580 peut te faire refuser un prêt ou payer un taux plus élevé.' },
+  { ch:'ch3', term:'Vente à tempérament', def:'Contrat de crédit intégré à l\'achat d\'un bien. Le vendeur finance l\'achat directement et demeure propriétaire légal du bien jusqu\'au remboursement complet.', example:'Acheter un canapé à 1 200 $ "sans paiement pendant 12 mois" chez Léon est une vente à tempérament.' },
+  { ch:'ch3', term:'Taux d\'endettement', def:'Proportion du revenu brut mensuel consacrée au remboursement de toutes les dettes. Les prêteurs considèrent généralement qu\'un taux supérieur à 40 % est risqué.', example:'Si tu gagnes 3 000 $/mois et que tes paiements de dettes totalisent 900 $, ton taux d\'endettement est de 30 %.' },
+  { ch:'ch3', term:'Cautionnement', def:'Engagement légal d\'une tierce personne (la caution) à rembourser la dette d\'un emprunteur si celui-ci fait défaut. Souvent exigé pour les premiers emprunts.', example:'Un parent qui co-signe le prêt étudiant de son enfant s\'engage à rembourser si l\'enfant ne peut pas.' },
+  { ch:'ch3', term:'Marge de crédit', def:'Crédit variable préapprouvé jusqu\'à une limite fixée. On peut emprunter, rembourser et réemprunter selon ses besoins. Le taux d\'intérêt est généralement plus bas que les cartes de crédit.', example:'Une marge de crédit étudiant de 15 000 $ permet d\'emprunter selon les besoins, en ne payant que les intérêts sur la somme utilisée.' },
+  { ch:'ch3', term:'Intérêt', def:'Coût à payer pour l\'utilisation de l\'argent emprunté, exprimé en pourcentage annuel. Pour le prêteur, c\'est un revenu. Pour l\'emprunteur, c\'est une dépense supplémentaire sur la somme empruntée.', example:'Emprunter 1 000 $ à 19 % sur 1 an coûte environ 190 $ d\'intérêt en plus du remboursement du capital.' },
+  { ch:'ch3', term:'Prêt hypothécaire', def:'Prêt à long terme (25-30 ans) garanti par un bien immobilier. C\'est généralement le crédit au taux le plus bas, car la propriété sert de garantie au prêteur.', example:'Pour acheter une maison de 400 000 $ avec 20 000 $ de mise de fonds, tu empruntes 380 000 $ sous forme de prêt hypothécaire.' },
+
+  // Ch4 — Budget & Surendettement
+  { ch:'ch4', term:'Budget', def:'Portrait chiffré de la situation financière d\'un individu ou d\'un ménage sur une période donnée. Il compare les revenus aux dépenses pour identifier les surplus ou déficits.', example:'Un budget mensuel liste tous tes revenus (salaire, bourses) et toutes tes dépenses (loyer, nourriture, transport).' },
+  { ch:'ch4', term:'Dépenses fixes', def:'Dépenses dont le montant est prévisible et stable d\'un mois à l\'autre. Difficiles à réduire rapidement.', example:'Loyer, paiements de prêts, assurances, abonnements mensuels.' },
+  { ch:'ch4', term:'Dépenses variables', def:'Dépenses dont le montant fluctue selon les choix et habitudes. Ce sont les premiers postes à ajuster en cas de budget serré.', example:'Alimentation, sorties, vêtements, essence, divertissement.' },
+  { ch:'ch4', term:'Fonds d\'urgence', def:'Épargne liquide réservée exclusivement aux imprévus sérieux. Les experts recommandent 3 à 6 mois de dépenses essentielles. Il évite de s\'endetter en cas de coup dur.', example:'Perte d\'emploi soudaine, panne de voiture, urgence médicale — le fonds d\'urgence couvre ces situations sans crédit.' },
+  { ch:'ch4', term:'Surendettement', def:'Situation dans laquelle un individu ne peut plus faire face à l\'ensemble de ses obligations financières sans sacrifier ses besoins de base (nourriture, logement, santé).', example:'Devoir choisir entre payer son loyer et se nourrir parce que les paiements de cartes de crédit sont trop élevés.' },
+  { ch:'ch4', term:'Faillite personnelle', def:'Procédure légale fédérale permettant à une personne insolvable d\'obtenir une libération de la plupart de ses dettes. Dernier recours aux conséquences très négatives sur le dossier de crédit (7 ans).', example:'Quelqu\'un avec 80 000 $ de dettes et aucune capacité de remboursement peut déclarer faillite pour repartir à zéro.' },
+  { ch:'ch4', term:'Proposition de consommateur', def:'Alternative à la faillite permettant de négocier avec ses créanciers un remboursement partiel ou étalé de ses dettes. Moins dommageable pour le dossier de crédit.', example:'Proposer de rembourser 60 % des dettes sur 4 ans plutôt que de faire faillite.' },
+
+  // Ch5 — Épargne & Investissement
+  { ch:'ch5', term:'CELI', def:'Compte d\'Épargne Libre d\'Impôt. Véhicule de placement canadien disponible dès 18 ans permettant de faire fructifier son argent entièrement à l\'abri de l\'impôt. Droits de cotisation : 7 000 $/an (2024).', example:'Investir 5 000 $ en FNB dans son CELI : tous les gains (dividendes, plus-value) sont exempts d\'impôt, même à la vente.' },
+  { ch:'ch5', term:'Intérêt composé', def:'Intérêt calculé non seulement sur le capital initial, mais aussi sur les intérêts déjà accumulés. C\'est le mécanisme le plus puissant de croissance des placements à long terme.', example:'100 $ à 6 % composé annuellement : 106 $ après 1 an, 112,36 $ après 2 ans, 179 $ après 10 ans — vs 160 $ en intérêt simple.' },
+  { ch:'ch5', term:'Règle du 72', def:'Méthode de calcul mental rapide pour estimer en combien d\'années un placement double de valeur : diviser 72 par le taux d\'intérêt annuel.', example:'À 8 % d\'intérêt : 72 ÷ 8 = 9 ans pour doubler. À 4 % : 72 ÷ 4 = 18 ans.' },
+  { ch:'ch5', term:'FNB', def:'Fonds Négocié en Bourse. Panier diversifié d\'actions ou d\'obligations négocié en bourse comme une action ordinaire. Offre une diversification instantanée à très faibles frais. Idéal pour débutants.', example:'XIC.TO regroupe les 230 plus grandes entreprises canadiennes. En achetant une action de XIC, tu investis dans toutes en même temps.' },
+  { ch:'ch5', term:'Action', def:'Titre de propriété d\'une fraction d\'une entreprise. Donne droit à des dividendes (part des profits) et à un gain en capital si le prix de l\'action augmente.', example:'Acheter 1 action de la Banque Royale (RY.TO) te rend propriétaire d\'une toute petite partie de la banque.' },
+  { ch:'ch5', term:'Dividende', def:'Partie des bénéfices d\'une entreprise redistribuée à ses actionnaires, généralement de façon trimestrielle. C\'est un revenu passif pour l\'investisseur.', example:'La Banque TD verse environ 1,02 $ de dividende par action par trimestre à ses actionnaires.' },
+  { ch:'ch5', term:'Gain en capital', def:'Profit réalisé lors de la vente d\'un actif (action, immeuble) à un prix supérieur à son prix d\'achat. Dans un CELI, ce gain est totalement exempt d\'impôt.', example:'Acheter une action à 50 $ et la revendre à 75 $ génère un gain en capital de 25 $.' },
+  { ch:'ch5', term:'REER', def:'Régime Enregistré d\'Épargne-Retraite. Les cotisations sont déductibles du revenu imposable (réduction d\'impôt immédiate), mais les retraits sont imposés. Idéal pour la retraite.', example:'Cotiser 5 000 $ au REER quand on est dans une tranche d\'imposition de 40 % économise 2 000 $ d\'impôt cette année.' },
+  { ch:'ch5', term:'Portefeuille financier', def:'Ensemble des actifs financiers d\'un investisseur : actions, obligations, FNB, CPG, etc. Un bon portefeuille est diversifié pour réduire le risque.', example:'Un portefeuille équilibré pourrait contenir 60 % d\'actions, 30 % d\'obligations et 10 % de liquidités.' },
+  { ch:'ch5', term:'Rendement', def:'Revenu généré par un placement, exprimé en pourcentage du capital investi. Comprend les intérêts, dividendes et gains en capital.', example:'Investir 1 000 $ et recevoir 80 $ de dividendes + une hausse de 70 $ = rendement total de 15 % cette année.' },
+  { ch:'ch5', term:'Convertibilité (liquidité)', def:'Facilité avec laquelle un placement peut être transformé en argent comptant rapidement sans perte significative de valeur.', example:'Un compte épargne est très liquide (retraitable en minutes). Un immeuble est peu liquide (vente qui prend des mois).' },
+];
+
+let activeFilter = 'all';
+let searchQuery = '';
+
+async function init() {
+  try {
+    const { data: userData } = await requireAuth('student');
+    initTopbar(userData);
+  } catch(e) { console.error(e); }
+
+  document.getElementById('term-count').textContent = TERMS.length;
+  renderGlossary();
+
+  document.getElementById('glossary-search').addEventListener('input', e => {
+    searchQuery = e.target.value.toLowerCase();
+    renderGlossary();
+  });
+
+  document.querySelectorAll('.filter-chip[data-ch]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip[data-ch]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.ch;
+      renderGlossary();
+    });
+  });
+}
+
+const CH_COLORS = {
+  ch1: { bg:'#FFF3E0', color:'#E65100', label:'Consommation' },
+  ch2: { bg:'#E3F2FD', color:'#1565C0', label:'État & Prix' },
+  ch3: { bg:'#FCE4EC', color:'#AD1457', label:'Crédit' },
+  ch4: { bg:'#F3E5F5', color:'#6A1B9A', label:'Budget' },
+  ch5: { bg:'#E8F5E9', color:'#2E7D32', label:'Épargne' },
+};
+
+function renderGlossary() {
+  const container = document.getElementById('glossary-list');
+  let filtered = TERMS.filter(t => {
+    const matchCh = activeFilter === 'all' || t.ch === activeFilter;
+    const matchSearch = !searchQuery ||
+      t.term.toLowerCase().includes(searchQuery) ||
+      t.def.toLowerCase().includes(searchQuery);
+    return matchCh && matchSearch;
+  });
+
+  filtered.sort((a,b) => a.term.localeCompare(b.term, 'fr'));
+  document.getElementById('term-count').textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="text-align:center; padding:48px; color:var(--slate);">
+      Aucun terme trouvé pour cette recherche.
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map((t, i) => {
+    const cfg = CH_COLORS[t.ch] || { bg:'#F5F5F5', color:'#333', label:t.ch };
+    return `
+      <div class="term-card" id="term-${i}" onclick="toggleTerm(${i})">
+        <div class="term-header">
+          <span class="term-name">${t.term}</span>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="term-chapter" style="background:${cfg.bg}; color:${cfg.color};">
+              ${cfg.label}
+            </span>
+            <span class="arrow-icon">▾</span>
+          </div>
+        </div>
+        <div class="term-def">
+          <p>${t.def}</p>
+          ${t.example ? `<div class="term-example">
+            <strong>Exemple :</strong> ${t.example}
+          </div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+window.toggleTerm = function(i) {
+  const card = document.getElementById(`term-${i}`);
+  card.classList.toggle('expanded');
+};
+
+init();
+</script>
+</body>
+</html>
