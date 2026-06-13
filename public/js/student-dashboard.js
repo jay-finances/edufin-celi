@@ -146,3 +146,57 @@ function formatUnlockDate(ts) {
 }
 
 init();
+// ── Actualités économiques ─────────────────────────────────────
+
+async function loadNews() {
+  const list = document.getElementById('newsList');
+  list.innerHTML = `
+    <div class="news-loading">
+      <div class="news-spinner"></div>
+      <span>Chargement…</span>
+    </div>`;
+
+  try {
+    const res  = await fetch('/api/news');
+    const data = await res.json();
+
+    if (!data.items || data.items.length === 0) {
+      list.innerHTML = '<p class="news-error">Aucun article disponible pour l\'instant.</p>';
+      return;
+    }
+
+    list.innerHTML = data.items.map(item => `
+      <a class="news-card" href="${item.link}" target="_blank" rel="noopener">
+        <div class="news-card-meta">
+          ${item.isBerube ? '<span class="news-berube-badge">✦ N. Bérubé</span>' : ''}
+          <span class="news-date">${formatNewsDate(item.pubDate)}</span>
+        </div>
+        <div class="news-card-title">${escNewsHtml(item.title)}</div>
+        ${item.description
+          ? `<div class="news-card-desc">${escNewsHtml(item.description)}</div>`
+          : ''}
+      </a>
+    `).join('');
+
+  } catch (err) {
+    list.innerHTML = '<p class="news-error">Impossible de charger les actualités.<br>Réessaie dans un moment.</p>';
+  }
+}
+
+function formatNewsDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '';
+  const diffH = Math.floor((new Date() - d) / 3600000);
+  if (diffH < 1)  return 'À l\'instant';
+  if (diffH < 24) return `Il y a ${diffH} h`;
+  return d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+}
+
+function escNewsHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Lancer au chargement
+loadNews();

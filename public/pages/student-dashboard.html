@@ -60,7 +60,7 @@
   </nav>
 
   <!-- Contenu -->
-  <main class="main-content">
+  <main class="main-content dashboard-main">
 
     <!-- Message de bienvenue -->
     <div class="flex-between mb-28">
@@ -121,6 +121,40 @@
     </div>
 
   </main>
+
+  <!-- Fil actualités économiques -->
+  <aside class="news-sidebar" id="newsSidebar">
+
+    <div id="pinnedSection" style="display:none">
+      <div class="news-section-header">
+        <span class="news-pin-icon">📌</span>
+        <span>Sélectionnés par votre enseignant</span>
+      </div>
+      <div id="pinnedList"></div>
+      <hr class="news-divider">
+    </div>
+
+    <div class="news-section-header news-header-top">
+      <div>
+        <h3 class="news-title">Actualités économiques</h3>
+        <span class="news-source-badge">La Presse</span>
+      </div>
+      <button class="news-refresh-btn" onclick="loadNews()" title="Rafraîchir">↻</button>
+    </div>
+
+    <div id="newsList">
+      <div class="news-loading">
+        <div class="news-spinner"></div>
+        <span>Chargement des actualités…</span>
+      </div>
+    </div>
+
+    <p class="news-footer">
+      Source : <a href="https://www.lapresse.ca/affaires" target="_blank" rel="noopener">La Presse — Affaires</a>
+    </p>
+
+  </aside>
+
 </div>
 
 <script type="module" src="../js/firebase-init.js"></script>
