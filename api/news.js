@@ -8,11 +8,27 @@ export default async function handler(req, res) {
   const FEEDS = [
     {
       url: 'https://www.lapresse.ca/affaires/finances-personnelles/rss',
-      label: 'Finances personnelles',
+      label: 'La Presse',
     },
     {
       url: 'https://www.lapresse.ca/affaires/economie/rss',
-      label: 'Économie',
+      label: 'La Presse',
+    },
+    {
+      url: 'https://ici.radio-canada.ca/rss/4159',
+      label: 'Radio-Canada',
+    },
+    {
+      url: 'https://www.ledevoir.com/rss/section/economie.xml',
+      label: 'Le Devoir',
+    },
+    {
+      url: 'https://www.banqueducanada.ca/feed/',
+      label: 'Banque du Canada',
+    },
+    {
+      url: 'https://www.bnnbloomberg.ca/rss',
+      label: 'BNN Bloomberg',
     },
   ];
 
