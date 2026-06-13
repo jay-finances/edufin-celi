@@ -157,7 +157,7 @@ async function loadNews() {
     </div>`;
 
   try {
-    const res  = await fetch('/api/news');
+    const res  = await fetch('/api/news.js');
     const data = await res.json();
 
     if (!data.items || data.items.length === 0) {
