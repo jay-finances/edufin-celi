@@ -200,3 +200,4 @@ function escNewsHtml(str) {
 
 // Lancer au chargement
 loadNews();
+document.getElementById('news-refresh-btn').addEventListener('click', loadNews);
