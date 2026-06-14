@@ -1550,7 +1550,7 @@ body {
 
 .week-question-wrap {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: 1fr 360px;
   gap: 24px;
   margin-bottom: 28px;
   grid-column: 1;
