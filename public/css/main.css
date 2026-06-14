@@ -1392,3 +1392,147 @@ body {
     border-top: 1px solid #e8f5f0;
   }
 }
+/* ── Babillard ────────────────────────────────────────────── */
+
+.cork-board {
+  background-color: #c8a96e;
+  background-image:
+    radial-gradient(ellipse at 20% 30%, rgba(180,140,80,0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(150,110,60,0.3) 0%, transparent 50%);
+  border-radius: 16px;
+  padding: 24px;
+  border: 3px solid #a07840;
+  margin-bottom: 28px;
+}
+
+.cork-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5a3e1b;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cork-title-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(90,62,27,0.3);
+}
+
+.cork-count {
+  font-size: 11px;
+  font-style: italic;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: rgba(90,62,27,0.7);
+}
+
+.notes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.note {
+  border-radius: 2px;
+  padding: 20px 16px 16px;
+  position: relative;
+  box-shadow: 2px 3px 8px rgba(0,0,0,0.18);
+}
+
+.note:nth-child(odd)  { transform: rotate(-0.8deg); }
+.note:nth-child(even) { transform: rotate(0.6deg); }
+
+.note-yellow { background: #fff9c4; }
+.note-white  { background: #fafafa; }
+.note-pink   { background: #fce4ec; }
+.note-blue   { background: #e3f2fd; }
+.note-green  { background: #e8f5e9; }
+
+.pushpin {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.pin-red    { background: radial-gradient(circle at 40% 35%, #ff6b6b, #c0392b); }
+.pin-blue   { background: radial-gradient(circle at 40% 35%, #74b9ff, #2980b9); }
+.pin-green  { background: radial-gradient(circle at 40% 35%, #55efc4, #00b894); }
+.pin-yellow { background: radial-gradient(circle at 40% 35%, #ffeaa7, #fdcb6e); }
+.pin-purple { background: radial-gradient(circle at 40% 35%, #d7aefb, #8e44ad); }
+
+.note-date {
+  font-size: 10px;
+  color: #999;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+.note-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d2d2d;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.note-body {
+  font-size: 13px;
+  color: #444;
+  line-height: 1.55;
+}
+
+.note-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #1565c0;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.note-img {
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 3px;
+  margin-top: 10px;
+}
+
+.cork-loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 20px;
+  color: #5a3e1b;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.cork-more-btn {
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(90,62,27,0.4);
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 12px;
+  color: #5a3e1b;
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.cork-more-btn:hover {
+  background: rgba(255,255,255,0.75);
+}
+
+@media (max-width: 700px) {
+  .notes-grid { grid-template-columns: 1fr; }
+}

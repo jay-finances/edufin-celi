@@ -201,3 +201,92 @@ function escNewsHtml(str) {
 // Lancer au chargement
 loadNews();
 document.getElementById('news-refresh-btn').addEventListener('click', loadNews);
+// ── Babillard ──────────────────────────────────────────────────
+
+const CORK_PAGE_SIZE = 8;
+let corkAllMessages = [];
+let corkDisplayed = 0;
+
+async function loadCorkBoard() {
+  const grid = document.getElementById('notesGrid');
+  if (!grid) return;
+
+  try {
+    const { collection, getDocs, orderBy, query } =
+      await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+    const q = query(
+      collection(window.db, 'babillard'),
+      orderBy('createdAt', 'desc')
+    );
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      grid.innerHTML = '<div class="cork-loading">Aucun message pour l\'instant.</div>';
+      return;
+    }
+
+    corkAllMessages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    corkDisplayed = 0;
+    grid.innerHTML = '';
+    renderCorkMessages();
+
+  } catch (err) {
+    console.warn('Babillard non disponible:', err);
+    const grid = document.getElementById('notesGrid');
+    if (grid) grid.innerHTML = '<div class="cork-loading">Babillard temporairement indisponible.</div>';
+  }
+}
+
+function renderCorkMessages() {
+  const grid    = document.getElementById('notesGrid');
+  const moreBtn = document.getElementById('cork-load-more');
+  const count   = document.getElementById('cork-count');
+
+  const slice = corkAllMessages.slice(corkDisplayed, corkDisplayed + CORK_PAGE_SIZE);
+
+  slice.forEach(msg => {
+    const colors = ['note-yellow','note-white','note-pink','note-blue','note-green'];
+    const pins   = ['pin-red','pin-blue','pin-green','pin-yellow','pin-purple'];
+    const color  = msg.color || colors[Math.floor(Math.random() * colors.length)];
+    const pin    = msg.pin   || pins[Math.floor(Math.random() * pins.length)];
+
+    const date = msg.createdAt?.toDate
+      ? msg.createdAt.toDate().toLocaleDateString('fr-CA', { day:'numeric', month:'long', year:'numeric' })
+      : '';
+
+    const imgHtml = msg.imageUrl
+      ? `<img class="note-img" src="${msg.imageUrl}" alt="Image du message">`
+      : '';
+
+    const linkHtml = msg.linkUrl
+      ? `<a class="note-link" href="${msg.linkUrl}" target="_blank" rel="noopener">→ ${msg.linkLabel || msg.linkUrl}</a>`
+      : '';
+
+    const div = document.createElement('div');
+    div.className = `note ${color}`;
+    div.innerHTML = `
+      <div class="pushpin ${pin}"></div>
+      <div class="note-date">${date}</div>
+      <div class="note-title">${escNewsHtml(msg.title || '')}</div>
+      <div class="note-body">${escNewsHtml(msg.content || '')}</div>
+      ${imgHtml}
+      ${linkHtml}
+    `;
+    grid.appendChild(div);
+  });
+
+  corkDisplayed += slice.length;
+
+  if (count) {
+    count.textContent = `${corkAllMessages.length} message${corkAllMessages.length > 1 ? 's' : ''}`;
+  }
+
+  if (moreBtn) {
+    moreBtn.style.display = corkDisplayed < corkAllMessages.length ? 'block' : 'none';
+  }
+}
+
+// Lancer au chargement
+loadCorkBoard();
+document.getElementById('corkMoreBtn')?.addEventListener('click', renderCorkMessages);
