@@ -232,7 +232,7 @@ async function loadCorkBoard() {
     corkDisplayed = 0;
     grid.innerHTML = '';
     renderCorkMessages();
-
+    await loadCorkBoard();
   } catch (err) {
     console.warn('Babillard non disponible:', err);
     grid.innerHTML = '<div class="cork-loading">Babillard temporairement indisponible.</div>';
@@ -290,5 +290,4 @@ function renderCorkMessages() {
 }
 
 // Lancer au chargement
-loadCorkBoard();
 document.getElementById('corkMoreBtn')?.addEventListener('click', renderCorkMessages);
