@@ -771,14 +771,14 @@ async function setupBabillard() {
 
   document.getElementById('cork-submit-btn')
     .addEventListener('click', async () => {
-      const title    = document.getElementById('cork-title').value.trim();
-      const content  = document.getElementById('cork-content').value.trim();
-      const color    = document.getElementById('cork-color').value;
-      const pin      = document.getElementById('cork-pin').value;
-      const imageUrl = document.getElementById('cork-image').value.trim();
-      const linkUrl  = document.getElementById('cork-link-url').value.trim();
-      const linkLabel= document.getElementById('cork-link-label').value.trim();
-      const feedback = document.getElementById('cork-feedback');
+      const title     = document.getElementById('cork-title').value.trim();
+      const content   = document.getElementById('cork-content').value.trim();
+      const color     = document.getElementById('cork-color').value;
+      const pin       = document.getElementById('cork-pin').value;
+      const imageUrl  = document.getElementById('cork-image').value.trim();
+      const linkUrl   = document.getElementById('cork-link-url').value.trim();
+      const linkLabel = document.getElementById('cork-link-label').value.trim();
+      const feedback  = document.getElementById('cork-feedback');
 
       if (!title || !content) {
         feedback.style.color = '#e55';
@@ -787,10 +787,7 @@ async function setupBabillard() {
       }
 
       try {
-        const { collection, addDoc, serverTimestamp } =
-          await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-
-        await addDoc(collection(window.db, 'babillard'), {
+        await addDoc(collection(db, 'babillard'), {
           title, content, color, pin,
           imageUrl:  imageUrl  || null,
           linkUrl:   linkUrl   || null,
@@ -822,10 +819,7 @@ async function loadCorkAdminList() {
   if (!list) return;
 
   try {
-    const { collection, getDocs, orderBy, query, deleteDoc, doc } =
-      await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-
-    const q    = query(collection(window.db, 'babillard'), orderBy('createdAt', 'desc'));
+    const q    = query(collection(db, 'babillard'), orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
 
     if (snap.empty) {
@@ -846,9 +840,7 @@ async function loadCorkAdminList() {
             <div style="font-size:13px; font-weight:600; color:#1a1a2e;">
               ${escapeHtml(data.title || '')}
             </div>
-            <div style="font-size:12px; color:#777; margin-top:3px;">
-              ${date}
-            </div>
+            <div style="font-size:12px; color:#777; margin-top:3px;">${date}</div>
           </div>
           <button onclick="deleteCorkMessage('${d.id}')"
             style="background:none; border:1px solid #ffd0d0; color:#e55;
@@ -859,16 +851,14 @@ async function loadCorkAdminList() {
     }).join('');
 
   } catch (err) {
-    list.innerHTML = '<p style="color:#aaa; font-size:13px;">Erreur de chargement.</p>';
+    list.innerHTML = '<p style="color:#aaa; font-size:13px;">Erreur : ' + err.message + '</p>';
   }
 }
 
 async function deleteCorkMessage(docId) {
   if (!confirm('Supprimer ce message du babillard?')) return;
   try {
-    const { deleteDoc, doc } =
-      await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-    await deleteDoc(doc(window.db, 'babillard', docId));
+    await deleteDoc(doc(db, 'babillard', docId));
     await loadCorkAdminList();
   } catch (err) {
     alert('Erreur : ' + err.message);
