@@ -1193,8 +1193,9 @@ body {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: 32px 24px;
+  padding: 32px 28px;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .news-sidebar {
