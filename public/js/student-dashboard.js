@@ -294,3 +294,29 @@ function renderCorkMessages() {
 
 // Lancer au chargement
 document.getElementById('corkMoreBtn')?.addEventListener('click', renderCorkMessages);
+async function loadCorkBoard() {
+  const grid = document.getElementById('notesGrid');
+  if (!grid) return;
+
+  try {
+    const q = query(
+      collection(db, 'babillard'),
+      orderBy('createdAt', 'desc')
+    );
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      grid.innerHTML = '<div class="cork-loading">Aucun message pour l\'instant.</div>';
+      return;
+    }
+
+    corkAllMessages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    corkDisplayed = 0;
+    grid.innerHTML = '';
+    renderCorkMessages();
+
+  } catch (err) {
+    console.warn('Babillard non disponible:', err);
+    grid.innerHTML = '<div class="cork-loading">Babillard temporairement indisponible.</div>';
+  }
+}
