@@ -765,6 +765,7 @@ async function loadTransactions() {
 
 init();
 // ── Babillard enseignant ───────────────────────────────────────
+let editingCorkId = null;
 
 async function setupBabillard() {
   await loadCorkAdminList();
@@ -787,22 +788,37 @@ async function setupBabillard() {
       }
 
       try {
-        await addDoc(collection(db, 'babillard'), {
-          title, content, color, pin,
-          imageUrl:  imageUrl  || null,
-          linkUrl:   linkUrl   || null,
-          linkLabel: linkLabel || null,
-          createdAt: serverTimestamp(),
-        });
+        if (editingCorkId) {
+          // Mode modification
+          await updateDoc(doc(db, 'babillard', editingCorkId), {
+            title, content, color, pin,
+            imageUrl:  imageUrl  || null,
+            linkUrl:   linkUrl   || null,
+            linkLabel: linkLabel || null,
+          });
+          feedback.style.color = '#0d9e72';
+          feedback.textContent = '✓ Message modifié!';
+          editingCorkId = null;
+          document.getElementById('cork-submit-btn').textContent = '📌 Afficher sur le babillard';
+          document.getElementById('cork-cancel-edit').style.display = 'none';
+        } else {
+          // Mode création
+          await addDoc(collection(db, 'babillard'), {
+            title, content, color, pin,
+            imageUrl:  imageUrl  || null,
+            linkUrl:   linkUrl   || null,
+            linkLabel: linkLabel || null,
+            createdAt: serverTimestamp(),
+          });
+          feedback.style.color = '#0d9e72';
+          feedback.textContent = '✓ Message affiché sur le babillard!';
+        }
 
-        feedback.style.color = '#0d9e72';
-        feedback.textContent = '✓ Message affiché sur le babillard!';
-
-        document.getElementById('cork-title').value = '';
-        document.getElementById('cork-content').value = '';
-        document.getElementById('cork-image').value = '';
-        document.getElementById('cork-link-url').value = '';
-        document.getElementById('cork-link-label').value = '';
+        // Vider le formulaire
+        ['cork-title','cork-content','cork-image','cork-link-url','cork-link-label']
+          .forEach(id => { document.getElementById(id).value = ''; });
+        document.getElementById('cork-color').value = 'note-yellow';
+        document.getElementById('cork-pin').value   = 'pin-red';
 
         setTimeout(() => feedback.textContent = '', 3000);
         await loadCorkAdminList();
@@ -810,6 +826,33 @@ async function setupBabillard() {
       } catch (err) {
         feedback.style.color = '#e55';
         feedback.textContent = 'Erreur : ' + err.message;
+      }
+    });
+
+  // Bouton annuler modification
+  document.getElementById('cork-cancel-edit')
+    .addEventListener('click', () => {
+      editingCorkId = null;
+      ['cork-title','cork-content','cork-image','cork-link-url','cork-link-label']
+        .forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('cork-color').value = 'note-yellow';
+      document.getElementById('cork-pin').value   = 'pin-red';
+      document.getElementById('cork-submit-btn').textContent = '📌 Afficher sur le babillard';
+      document.getElementById('cork-cancel-edit').style.display = 'none';
+      document.getElementById('cork-feedback').textContent = '';
+    });
+
+  // Délégateur pour Modifier / Supprimer
+  document.getElementById('cork-admin-list')
+    .addEventListener('click', async (e) => {
+      const deleteBtn = e.target.closest('[data-delete-id]');
+      const editBtn   = e.target.closest('[data-edit-id]');
+
+      if (deleteBtn) {
+        await deleteCorkMessage(deleteBtn.dataset.deleteId);
+      }
+      if (editBtn) {
+        await editCorkMessage(editBtn.dataset.editId);
       }
     });
 }
@@ -842,16 +885,50 @@ async function loadCorkAdminList() {
             </div>
             <div style="font-size:12px; color:#777; margin-top:3px;">${date}</div>
           </div>
-          <button onclick="deleteCorkMessage('${d.id}')"
-            style="background:none; border:1px solid #ffd0d0; color:#e55;
-                   border-radius:7px; padding:5px 12px; font-size:12px; cursor:pointer;">
-            Supprimer
-          </button>
+          <div style="display:flex; gap:8px; flex-shrink:0;">
+            <button data-edit-id="${d.id}"
+              style="background:none; border:1px solid #c8ede2; color:#0d9e72;
+                     border-radius:7px; padding:5px 12px; font-size:12px; cursor:pointer;">
+              Modifier
+            </button>
+            <button data-delete-id="${d.id}"
+              style="background:none; border:1px solid #ffd0d0; color:#e55;
+                     border-radius:7px; padding:5px 12px; font-size:12px; cursor:pointer;">
+              Supprimer
+            </button>
+          </div>
         </div>`;
     }).join('');
 
   } catch (err) {
     list.innerHTML = '<p style="color:#aaa; font-size:13px;">Erreur : ' + err.message + '</p>';
+  }
+}
+
+async function editCorkMessage(docId) {
+  try {
+    const snap = await getDoc(doc(db, 'babillard', docId));
+    if (!snap.exists()) return;
+    const data = snap.data();
+
+    document.getElementById('cork-title').value      = data.title     || '';
+    document.getElementById('cork-content').value    = data.content   || '';
+    document.getElementById('cork-color').value      = data.color     || 'note-yellow';
+    document.getElementById('cork-pin').value        = data.pin       || 'pin-red';
+    document.getElementById('cork-image').value      = data.imageUrl  || '';
+    document.getElementById('cork-link-url').value   = data.linkUrl   || '';
+    document.getElementById('cork-link-label').value = data.linkLabel || '';
+
+    editingCorkId = docId;
+    document.getElementById('cork-submit-btn').textContent = '💾 Enregistrer les modifications';
+    document.getElementById('cork-cancel-edit').style.display = 'inline-block';
+
+    // Scroll vers le formulaire
+    document.getElementById('cork-title').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('cork-title').focus();
+
+  } catch (err) {
+    alert('Erreur : ' + err.message);
   }
 }
 
