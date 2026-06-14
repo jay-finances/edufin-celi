@@ -1190,6 +1190,9 @@ body {
 .dashboard-main {
   grid-column: 2;
   grid-row: 2;
+  display: block;
+  overflow-y: auto;
+  padding: 32px 24px;
 }
 
 .news-sidebar {
