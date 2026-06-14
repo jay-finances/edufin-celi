@@ -1170,6 +1170,7 @@ body {
 /* ── Actualités économiques ───────────────────────────── */
 
 .app-layout {
+  .app-layout {
   display: grid;
   grid-template-columns: 220px 1fr 300px;
   grid-template-rows: 60px 1fr;
@@ -1178,22 +1179,27 @@ body {
 
 .topbar {
   grid-column: 1 / -1;
+  grid-row: 1;
 }
 
 .sidebar {
+  grid-column: 1;
   grid-row: 2;
 }
 
 .dashboard-main {
+  grid-column: 2;
   grid-row: 2;
 }
 
 .news-sidebar {
+  grid-column: 3;
   grid-row: 2;
   border-left: 1px solid #e8f5f0;
   height: calc(100vh - 60px);
   position: sticky;
   top: 60px;
+  overflow-y: auto;
 }
 
 .dashboard-main {
