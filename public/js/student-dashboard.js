@@ -74,8 +74,11 @@ async function init() {
     // Afficher les modules
     renderModulesPreview(MODULE_DEFS, progress, moduleConfig);
 
-    // Vérifier s'il y a un nouveau module disponible
+  // Vérifier s'il y a un nouveau module disponible
     checkForNewModule(MODULE_DEFS, progress, moduleConfig);
+
+    // Charger le babillard
+    await loadCorkBoard();
 
   } catch (err) {
     console.error(err);
