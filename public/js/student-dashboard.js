@@ -158,16 +158,13 @@ async function loadNews() {
       <div class="news-spinner"></div>
       <span>Chargement…</span>
     </div>`;
-
   try {
     const res  = await fetch('/api/news.js');
     const data = await res.json();
-
     if (!data.items || data.items.length === 0) {
       list.innerHTML = '<p class="news-error">Aucun article disponible pour l\'instant.</p>';
       return;
     }
-
     list.innerHTML = data.items.map(item => `
       <a class="news-card" href="${item.link}" target="_blank" rel="noopener">
         <div class="news-card-meta">
@@ -175,12 +172,9 @@ async function loadNews() {
           <span class="news-date">${formatNewsDate(item.pubDate)}</span>
         </div>
         <div class="news-card-title">${escNewsHtml(item.title)}</div>
-        ${item.description
-          ? `<div class="news-card-desc">${escNewsHtml(item.description)}</div>`
-          : ''}
+        ${item.description ? `<div class="news-card-desc">${escNewsHtml(item.description)}</div>` : ''}
       </a>
     `).join('');
-
   } catch (err) {
     list.innerHTML = '<p class="news-error">Impossible de charger les actualités.<br>Réessaie dans un moment.</p>';
   }
@@ -201,9 +195,9 @@ function escNewsHtml(str) {
                     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// Lancer au chargement
 loadNews();
 document.getElementById('news-refresh-btn').addEventListener('click', loadNews);
+
 // ── Babillard ──────────────────────────────────────────────────
 
 const CORK_PAGE_SIZE = 8;
@@ -211,31 +205,22 @@ let corkAllMessages = [];
 let corkDisplayed = 0;
 
 async function loadCorkBoard() {
-  const CORK_PAGE_SIZE = 8;
-let corkAllMessages = [];
-let corkDisplayed = 0;
-
-async function loadCorkBoard() {
   const grid = document.getElementById('notesGrid');
   if (!grid) return;
-
   try {
     const q = query(
       collection(db, 'babillard'),
       orderBy('createdAt', 'desc')
     );
     const snap = await getDocs(q);
-
     if (snap.empty) {
       grid.innerHTML = '<div class="cork-loading">Aucun message pour l\'instant.</div>';
       return;
     }
-
     corkAllMessages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     corkDisplayed = 0;
     grid.innerHTML = '';
     renderCorkMessages();
-    await loadCorkBoard();
   } catch (err) {
     console.warn('Babillard non disponible:', err);
     grid.innerHTML = '<div class="cork-loading">Babillard temporairement indisponible.</div>';
@@ -246,28 +231,21 @@ function renderCorkMessages() {
   const grid    = document.getElementById('notesGrid');
   const moreBtn = document.getElementById('cork-load-more');
   const count   = document.getElementById('cork-count');
-
-  const slice = corkAllMessages.slice(corkDisplayed, corkDisplayed + CORK_PAGE_SIZE);
+  const slice   = corkAllMessages.slice(corkDisplayed, corkDisplayed + CORK_PAGE_SIZE);
 
   slice.forEach(msg => {
     const color = msg.color || 'note-yellow';
     const pin   = msg.pin   || 'pin-red';
-
-    const date = msg.createdAt?.toDate
+    const date  = msg.createdAt?.toDate
       ? msg.createdAt.toDate().toLocaleDateString('fr-CA',
           { day:'numeric', month:'long', year:'numeric' })
       : '';
-
-    const imgHtml = msg.imageUrl
+    const imgHtml  = msg.imageUrl
       ? `<img class="note-img" src="${msg.imageUrl}" alt="Image du message">`
       : '';
-
     const linkHtml = msg.linkUrl
-      ? `<a class="note-link" href="${msg.linkUrl}" target="_blank" rel="noopener">
-           → ${msg.linkLabel || msg.linkUrl}
-         </a>`
+      ? `<a class="note-link" href="${msg.linkUrl}" target="_blank" rel="noopener">→ ${msg.linkLabel || msg.linkUrl}</a>`
       : '';
-
     const div = document.createElement('div');
     div.className = `note ${color}`;
     div.innerHTML = `
@@ -282,41 +260,12 @@ function renderCorkMessages() {
   });
 
   corkDisplayed += slice.length;
-
   if (count) {
     count.textContent = `${corkAllMessages.length} message${corkAllMessages.length > 1 ? 's' : ''}`;
   }
-
   if (moreBtn) {
     moreBtn.style.display = corkDisplayed < corkAllMessages.length ? 'block' : 'none';
   }
 }
 
-// Lancer au chargement
 document.getElementById('corkMoreBtn')?.addEventListener('click', renderCorkMessages);
-async function loadCorkBoard() {
-  const grid = document.getElementById('notesGrid');
-  if (!grid) return;
-
-  try {
-    const q = query(
-      collection(db, 'babillard'),
-      orderBy('createdAt', 'desc')
-    );
-    const snap = await getDocs(q);
-
-    if (snap.empty) {
-      grid.innerHTML = '<div class="cork-loading">Aucun message pour l\'instant.</div>';
-      return;
-    }
-
-    corkAllMessages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    corkDisplayed = 0;
-    grid.innerHTML = '';
-    renderCorkMessages();
-
-  } catch (err) {
-    console.warn('Babillard non disponible:', err);
-    grid.innerHTML = '<div class="cork-loading">Babillard temporairement indisponible.</div>';
-  }
-}
