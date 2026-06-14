@@ -49,6 +49,7 @@ async function init() {
     setupQuestionBank();
     setupFundsModal();
     setupImport();
+    setupBabillard();
   } catch (err) { console.error(err); }
 }
 
@@ -763,3 +764,118 @@ async function loadTransactions() {
 }
 
 init();
+// ── Babillard enseignant ───────────────────────────────────────
+
+async function setupBabillard() {
+  await loadCorkAdminList();
+
+  document.getElementById('cork-submit-btn')
+    .addEventListener('click', async () => {
+      const title    = document.getElementById('cork-title').value.trim();
+      const content  = document.getElementById('cork-content').value.trim();
+      const color    = document.getElementById('cork-color').value;
+      const pin      = document.getElementById('cork-pin').value;
+      const imageUrl = document.getElementById('cork-image').value.trim();
+      const linkUrl  = document.getElementById('cork-link-url').value.trim();
+      const linkLabel= document.getElementById('cork-link-label').value.trim();
+      const feedback = document.getElementById('cork-feedback');
+
+      if (!title || !content) {
+        feedback.style.color = '#e55';
+        feedback.textContent = 'Le titre et le message sont obligatoires.';
+        return;
+      }
+
+      try {
+        const { collection, addDoc, serverTimestamp } =
+          await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        await addDoc(collection(window.db, 'babillard'), {
+          title, content, color, pin,
+          imageUrl:  imageUrl  || null,
+          linkUrl:   linkUrl   || null,
+          linkLabel: linkLabel || null,
+          createdAt: serverTimestamp(),
+        });
+
+        feedback.style.color = '#0d9e72';
+        feedback.textContent = '✓ Message affiché sur le babillard!';
+
+        document.getElementById('cork-title').value = '';
+        document.getElementById('cork-content').value = '';
+        document.getElementById('cork-image').value = '';
+        document.getElementById('cork-link-url').value = '';
+        document.getElementById('cork-link-label').value = '';
+
+        setTimeout(() => feedback.textContent = '', 3000);
+        await loadCorkAdminList();
+
+      } catch (err) {
+        feedback.style.color = '#e55';
+        feedback.textContent = 'Erreur : ' + err.message;
+      }
+    });
+}
+
+async function loadCorkAdminList() {
+  const list = document.getElementById('cork-admin-list');
+  if (!list) return;
+
+  try {
+    const { collection, getDocs, orderBy, query, deleteDoc, doc } =
+      await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+    const q    = query(collection(window.db, 'babillard'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      list.innerHTML = '<p style="color:#aaa; font-size:13px;">Aucun message pour l\'instant.</p>';
+      return;
+    }
+
+    list.innerHTML = snap.docs.map(d => {
+      const data = d.data();
+      const date = data.createdAt?.toDate
+        ? data.createdAt.toDate().toLocaleDateString('fr-CA',
+            { day:'numeric', month:'long', year:'numeric' })
+        : '';
+      return `
+        <div style="display:flex; align-items:flex-start; justify-content:space-between;
+                    padding:12px 0; border-bottom:1px solid #f0f0f0; gap:16px;">
+          <div style="flex:1;">
+            <div style="font-size:13px; font-weight:600; color:#1a1a2e;">
+              ${escapeHtml(data.title || '')}
+            </div>
+            <div style="font-size:12px; color:#777; margin-top:3px;">
+              ${date}
+            </div>
+          </div>
+          <button onclick="deleteCorkMessage('${d.id}')"
+            style="background:none; border:1px solid #ffd0d0; color:#e55;
+                   border-radius:7px; padding:5px 12px; font-size:12px; cursor:pointer;">
+            Supprimer
+          </button>
+        </div>`;
+    }).join('');
+
+  } catch (err) {
+    list.innerHTML = '<p style="color:#aaa; font-size:13px;">Erreur de chargement.</p>';
+  }
+}
+
+async function deleteCorkMessage(docId) {
+  if (!confirm('Supprimer ce message du babillard?')) return;
+  try {
+    const { deleteDoc, doc } =
+      await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    await deleteDoc(doc(window.db, 'babillard', docId));
+    await loadCorkAdminList();
+  } catch (err) {
+    alert('Erreur : ' + err.message);
+  }
+}
+
+function escapeHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}

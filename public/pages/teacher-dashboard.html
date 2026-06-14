@@ -185,6 +185,9 @@
     <button class="teacher-nav-item" data-section="transactions">
       <span>💰</span> Transactions CELI
     </button>
+    <button class="teacher-nav-item" data-section="babillard">
+      <span>📌</span> Babillard
+    </button>
     <div class="sidebar-section-title" style="margin-top:16px;">Accès rapide</div>
     <button class="teacher-nav-item" id="btn-add-funds-quick">
       <span>➕</span> Ajouter des fonds
@@ -192,7 +195,83 @@
   </nav>
 
   <main class="main-content">
+ <!-- ── SECTION BABILLARD ── -->
+    <div id="section-babillard" class="section-panel">
+      <div class="flex-between mb-20">
+        <h2 style="font-size:24px; font-weight:700;">Babillard</h2>
+      </div>
 
+      <!-- Formulaire nouveau message -->
+      <div class="card mb-28" style="padding:24px;">
+        <h3 class="card-title">Nouveau message</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div>
+            <label class="form-label">Titre *</label>
+            <input type="text" id="cork-title" class="form-input"
+              placeholder="ex: Rappel — Quiz Ch.3 cette semaine">
+          </div>
+          <div>
+            <label class="form-label">Couleur de la feuille</label>
+            <select id="cork-color" class="form-input">
+              <option value="note-yellow">🟡 Jaune</option>
+              <option value="note-white">⬜ Blanc</option>
+              <option value="note-pink">🩷 Rose</option>
+              <option value="note-blue">🔵 Bleu</option>
+              <option value="note-green">🟢 Vert</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label class="form-label">Message *</label>
+          <textarea id="cork-content" class="form-input"
+            style="height:100px; resize:vertical;"
+            placeholder="Votre message pour les élèves..."></textarea>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div>
+            <label class="form-label">Couleur de la punaise</label>
+            <select id="cork-pin" class="form-input">
+              <option value="pin-red">🔴 Rouge</option>
+              <option value="pin-blue">🔵 Bleu</option>
+              <option value="pin-green">🟢 Vert</option>
+              <option value="pin-yellow">🟡 Jaune</option>
+              <option value="pin-purple">🟣 Violet</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">URL d'une image <span style="color:#aaa;font-weight:400;">(optionnel)</span></label>
+            <input type="url" id="cork-image" class="form-input"
+              placeholder="https://...">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+          <div>
+            <label class="form-label">Lien URL <span style="color:#aaa;font-weight:400;">(optionnel)</span></label>
+            <input type="url" id="cork-link-url" class="form-input"
+              placeholder="https://...">
+          </div>
+          <div>
+            <label class="form-label">Texte du lien</label>
+            <input type="text" id="cork-link-label" class="form-input"
+              placeholder="ex: Lire l'article">
+          </div>
+        </div>
+        <button class="btn-primary" id="cork-submit-btn"
+          style="width:auto; padding:10px 24px; font-size:14px;">
+          📌 Afficher sur le babillard
+        </button>
+        <span id="cork-feedback" style="margin-left:14px; font-size:13px; color:#0d9e72;"></span>
+      </div>
+
+      <!-- Liste des messages existants -->
+      <div class="card" style="padding:24px;">
+        <h3 class="card-title">Messages affichés</h3>
+        <div id="cork-admin-list">
+          <p style="color:#aaa; font-size:13px;">Chargement…</p>
+        </div>
+      </div>
+
+    </div>
     <!-- ── SECTION ÉLÈVES & GROUPES ── -->
     <div id="section-students" class="section-panel visible">
       <div class="flex-between mb-20">
