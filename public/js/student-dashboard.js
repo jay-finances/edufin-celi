@@ -397,7 +397,7 @@ async function handleQuizAnswer(q, weekNum, choiceIndex, userId) {
   btns[q.answer].classList.add('correct');
 
   try {
-    const { setDoc, increment: fsIncrement, updateDoc: fsUpdateDoc } =
+    const { setDoc, increment: fsIncrement } =
       await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
     await setDoc(doc(db, 'users', userId, 'weeklyQuiz', `week-${weekNum}`), {
@@ -410,9 +410,9 @@ async function handleQuizAnswer(q, weekNum, choiceIndex, userId) {
     await setDoc(statsRef, statsData, { merge: true });
 
     if (isCorrect) {
-      await fsUpdateDoc(doc(db, 'users', userId), {
-        celiBalance: fsIncrement(QUIZ_BONUS),
-      });
+      await setDoc(doc(db, 'users', userId), {
+        celiBalance: fsIncrement(QUIZ_BONUS)
+      }, { merge: true });
     }
   } catch (err) {
     console.warn('Erreur sauvegarde quiz:', err);
