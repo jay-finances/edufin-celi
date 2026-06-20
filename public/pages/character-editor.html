@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>ÉduFin — Mon personnage</title>
+<script type="module" src="../js/firebase-init.js"></script>
 <style>
 /* ── Reset & base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,6 +44,41 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
+  gap: 12px;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.btn-back:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text);
+}
+.btn-back svg {
+  width: 14px; height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
 }
 .header-logo {
   font-size: 18px;
@@ -51,6 +87,13 @@ body {
   letter-spacing: 0.5px;
 }
 .header-logo span { color: var(--accent); }
+.header-title {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 400;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+}
 .btn-save {
   background: var(--accent);
   color: white;
@@ -61,6 +104,7 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: opacity 0.15s;
+  white-space: nowrap;
 }
 .btn-save:hover { opacity: 0.85; }
 .btn-save:disabled { opacity: 0.4; cursor: default; }
@@ -297,7 +341,16 @@ body {
 <body>
 
 <header class="header">
-  <div class="header-logo">Édu<span>Fin</span> RPG</div>
+  <div class="header-left">
+    <a href="student-dashboard.html" class="btn-back" title="Retour au tableau de bord">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Tableau de bord
+    </a>
+    <div class="header-logo">Édu<span>Fin</span> RPG</div>
+    <span class="header-title">Mon personnage</span>
+  </div>
   <button class="btn-save" id="btnSave" onclick="saveAvatar()">Sauvegarder</button>
 </header>
 
@@ -654,28 +707,112 @@ function isUnlocked(unlock) {
   return false;
 }
 
-// ── Sauvegarde (Firebase en prod) ──
+// ── Sauvegarde Firebase ──
 window.saveAvatar = async function() {
   const btn = document.getElementById('btnSave');
   btn.disabled = true;
   btn.textContent = 'Sauvegarde…';
 
-  // En production :
-  // const { doc, setDoc } = await import("firebase/firestore");
-  // await setDoc(doc(db, 'users', currentUser.uid), { avatar: av }, { merge: true });
+  try {
+    // Imports Firebase (même version que firebase-init.js)
+    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const { getAuth }       = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    const { getFirestore, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
-  await new Promise(r=>setTimeout(r,600)); // Simulé
+    // Récupérer l'app Firebase déjà initialisée par firebase-init.js
+    // (character-editor est une page autonome — on réutilise l'app existante)
+    const app  = getApps()[0];
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    const user = auth.currentUser;
 
-  btn.disabled = false;
-  btn.textContent = 'Sauvegarder';
-  const toast = document.getElementById('toast');
-  toast.classList.add('show');
-  setTimeout(()=>toast.classList.remove('show'), 2500);
+    if (!user) {
+      alert('Tu dois être connecté pour sauvegarder.');
+      btn.disabled = false;
+      btn.textContent = 'Sauvegarder';
+      return;
+    }
+
+    // Sauvegarder l'avatar dans users/{uid}
+    await setDoc(
+      doc(db, 'users', user.uid),
+      { avatar: av },
+      { merge: true }   // ne touche pas aux autres champs
+    );
+
+    btn.disabled = false;
+    btn.textContent = 'Sauvegarder';
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+
+  } catch(err) {
+    console.error('[Avatar] Erreur sauvegarde:', err);
+    btn.disabled = false;
+    btn.textContent = 'Sauvegarder';
+    alert('Erreur lors de la sauvegarde. Réessaie.');
+  }
 };
 
-// ── Init ──
-buildOptionsPanel();
-renderPreview();
+// ── Charger le profil Firebase au démarrage ──
+(async () => {
+  try {
+    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    const { getFirestore, doc, getDoc }   = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+    // Attendre que firebase-init.js ait initialisé l'app
+    let retries = 0;
+    while (getApps().length === 0 && retries < 20) {
+      await new Promise(r => setTimeout(r, 100));
+      retries++;
+    }
+    if (getApps().length === 0) return; // Firebase non disponible
+
+    const app  = getApps()[0];
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        // Non connecté → rediriger vers la page de connexion
+        window.location.href = '../index.html';
+        return;
+      }
+
+      // Lire le profil de l'élève
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+
+        // Mettre à jour le nom dans la carte
+        if (data.displayName) profile.displayName = data.displayName;
+        if (data.rpgLevel)    profile.level        = data.rpgLevel;
+        if (data.celiBalance) profile.netWorth      = data.celiBalance;
+        if (data.rpgStats)    Object.assign(stats, data.rpgStats);
+
+        // Restaurer l'avatar sauvegardé
+        if (data.avatar && Object.keys(data.avatar).length > 0) {
+          Object.assign(av, data.avatar);
+        }
+
+        // Progression pour les unlocks
+        if (data.ch5Completed) progress.ch5Completed = true;
+        if (data.rpgAge >= 18) progress.ageUnlocked18 = true;
+      }
+
+      // Reconstruire le panneau et l'aperçu avec les données réelles
+      buildOptionsPanel();
+      renderPreview();
+    });
+
+  } catch(e) {
+    console.warn('[Avatar] Firebase non disponible, mode démo.', e);
+    // Mode démo sans Firebase
+    buildOptionsPanel();
+    renderPreview();
+  }
+})();
 </script>
 </body>
 </html>
