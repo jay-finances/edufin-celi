@@ -2,7 +2,7 @@
 import { db, auth } from '../js/firebase-init.js';
 import { requireAuth, formatCAD, formatDate, initTopbar, isModuleAvailable }
   from '../js/utils.js';
-import { doc, getDoc, collection, getDocs, query, orderBy, limit }
+import { doc, getDoc, collection, getDocs, query, orderBy, limit, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Définition des modules
@@ -15,31 +15,26 @@ const MODULE_DEFS = [
 ];
 
 // ── Avatar : chargement + écoute temps réel ─────────────────────────────────
-// Quand l élève modifie son personnage dans character-editor.html et sauvegarde,
-// le dashboard se met à jour automatiquement sans rechargement de page.
+// onSnapshot est importé statiquement en haut du fichier avec db.
+// Dès que character-editor.html sauvegarde un avatar, le dashboard
+// se met à jour immédiatement sans rechargement de page.
 function loadAvatarRealtime(uid, initialData) {
-  // 1. Affichage immédiat avec les données déjà chargées
+  // 1. Affichage immédiat avec les données déjà chargées par requireAuth
   applyAvatarData(initialData);
 
-  // 2. Écoute Firestore en temps réel (onSnapshot)
-  // Si character-editor.html sauvegarde un nouvel avatar → mise à jour instantanée
-  try {
-    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js')
-      .then(({ onSnapshot, doc: fsDoc }) => {
-        onSnapshot(fsDoc(db, 'users', uid), (snap) => {
-          if (snap.exists()) {
-            applyAvatarData(snap.data());
-          }
-        });
-      });
-  } catch(e) {
-    console.warn('[Avatar] onSnapshot non disponible:', e);
-  }
+  // 2. Écoute Firestore temps réel — utilise db et onSnapshot importés statiquement
+  onSnapshot(doc(db, 'users', uid), (snap) => {
+    if (snap.exists()) {
+      applyAvatarData(snap.data());
+    }
+  });
 }
 
 function applyAvatarData(userData) {
   const avatarData  = userData.avatar       || {};
   const rpgLevel    = userData.rpgLevel     || 1;
+  // DEBUG — à retirer après confirmation de fonctionnement
+  console.log('[RPG] applyAvatarData appelé. Avatar keys:', Object.keys(avatarData));
   const rpgXP       = userData.rpgXP       || 0;
   const rpgAge      = userData.rpgAge      || 17;
   const rpgWeek     = userData.rpgWeek     || 1;
@@ -88,16 +83,21 @@ function applyAvatarData(userData) {
   generateAndInjectAvatar(avatarData);
 }
 
-// Génère le SVG de l avatar et l injecte dans la mini carte
+// Génère le SVG de l avatar et l injecte dans la mini carte.
+// character.js est dans public/js/ — chemin relatif depuis public/pages/
 async function generateAndInjectAvatar(avatarData) {
   if (!avatarData || Object.keys(avatarData).length === 0) return;
+  const cont = document.getElementById('avatarSVGMini');
+  if (!cont) return;
   try {
     const mod = await import('../js/character.js');
-    const svg = mod.generateAvatarSVG(avatarData, 68);
-    const cont = document.getElementById('avatarSVGMini');
-    if (cont) cont.innerHTML = svg;
+    if (mod && mod.generateAvatarSVG) {
+      const svg = mod.generateAvatarSVG(avatarData, 68);
+      cont.innerHTML = svg;
+    }
   } catch(e) {
-    // character.js absent — garde le SVG de fallback statique
+    // character.js absent ou erreur — log pour debug, fallback SVG gardé
+    console.warn('[Avatar] Impossible de charger character.js:', e.message);
   }
 }
 
