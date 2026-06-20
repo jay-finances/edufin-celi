@@ -7,12 +7,397 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/main.css">
+
+  <!-- ── RPG Dashboard styles ── -->
+  <style>
+  /* ═══════════════════════════════════════════
+     AVATAR CARD MINI (header)
+  ═══════════════════════════════════════════ */
+  .rpg-header {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+
+  .avatar-card-mini {
+    border-radius: 10px;
+    border: 2px solid rgba(0,0,0,0.25);
+    overflow: hidden;
+    flex-shrink: 0;
+    width: 80px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-decoration: none;
+    display: block;
+    /* Fond par défaut bleu — écrasé par data-bg via JS */
+    background: linear-gradient(170deg, #4A8FD4 30%, #2A5FA0 100%);
+  }
+  .avatar-card-mini:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  }
+  .av-top {
+    padding: 8px 6px 4px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    min-height: 92px;
+  }
+  .av-top svg {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .av-bottom {
+    background: #2A2A3E;
+    padding: 4px 6px 5px;
+    border-top: 2px solid rgba(0,0,0,0.35);
+    text-align: center;
+  }
+  .av-stars {
+    color: #FFD700;
+    font-size: 9px;
+    letter-spacing: 1px;
+    display: block;
+  }
+  .av-level {
+    color: #AAAAAA;
+    font-size: 8px;
+    display: block;
+    margin-top: 1px;
+  }
+
+  /* Fonds de carte selon bgColor avatar */
+  .avatar-card-mini[data-bg="blue"]   { background: linear-gradient(170deg,#4A8FD4 30%,#2A5FA0 100%); }
+  .avatar-card-mini[data-bg="red"]    { background: linear-gradient(170deg,#D04060 30%,#8A1A30 100%); }
+  .avatar-card-mini[data-bg="green"]  { background: linear-gradient(170deg,#3AAA5A 30%,#1A6A30 100%); }
+  .avatar-card-mini[data-bg="gold"]   { background: linear-gradient(170deg,#D4A000 30%,#8A6000 100%); }
+  .avatar-card-mini[data-bg="purple"] { background: linear-gradient(170deg,#7040D0 30%,#3A1A80 100%); }
+  .avatar-card-mini[data-bg="teal"]   { background: linear-gradient(170deg,#20A0A0 30%,#0A6060 100%); }
+
+  /* ═══════════════════════════════════════════
+     INFOS ÉLÈVE (à droite de l'avatar)
+  ═══════════════════════════════════════════ */
+  .rpg-header-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .rpg-greeting-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .rpg-level-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #E6F1FB;
+    border: 0.5px solid #B5D4F4;
+    border-radius: 99px;
+    padding: 3px 10px 3px 7px;
+    font-size: 11px;
+    color: #185FA5;
+    font-weight: 400;
+  }
+  .rpg-level-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #378ADD;
+    flex-shrink: 0;
+  }
+  .rpg-greeting-sub {
+    font-size: 13px;
+    color: var(--slate);
+    margin-top: 5px;
+  }
+  .rpg-edit-link {
+    font-size: 11px;
+    color: var(--slate);
+    margin-top: 7px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .rpg-edit-link:hover { color: var(--text); }
+  .rpg-edit-link svg {
+    width: 12px; height: 12px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ═══════════════════════════════════════════
+     BARRE XP
+  ═══════════════════════════════════════════ */
+  .rpg-xp-block {
+    text-align: right;
+    flex-shrink: 0;
+    min-width: 160px;
+  }
+  .rpg-xp-label {
+    font-size: 11px;
+    color: var(--slate);
+    margin-bottom: 5px;
+  }
+  .rpg-xp-track {
+    height: 6px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 99px;
+    overflow: hidden;
+    border: 0.5px solid rgba(0,0,0,0.1);
+  }
+  .rpg-xp-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #378ADD;
+    transition: width 0.7s ease;
+  }
+  .rpg-xp-next {
+    font-size: 10px;
+    color: var(--slate);
+    margin-top: 4px;
+  }
+
+  /* ═══════════════════════════════════════════
+     4 CARTES STATS CLIQUABLES
+  ═══════════════════════════════════════════ */
+  .rpg-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .rpg-stat-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border, #E5E7EB);
+    border-radius: 14px;
+    padding: 14px 16px 13px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+  }
+  .rpg-stat-card:hover {
+    border-color: #378ADD;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(55,138,221,0.12);
+  }
+  /* Petite flèche discrète au survol */
+  .rpg-stat-card::after {
+    content: '→';
+    position: absolute;
+    bottom: 11px;
+    right: 13px;
+    font-size: 13px;
+    color: #D1D5DB;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .rpg-stat-card:hover::after { opacity: 1; }
+
+  /* Barre colorée en bas de chaque carte */
+  .rpg-stat-accent {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 0 0 14px 14px;
+  }
+
+  .rpg-stat-icon {
+    font-size: 20px;
+    margin-bottom: 9px;
+    display: block;
+    line-height: 1;
+  }
+  .rpg-stat-label {
+    font-size: 10px;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+  .rpg-stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+  }
+  .rpg-stat-sub {
+    font-size: 11px;
+    color: var(--slate);
+    margin-top: 5px;
+  }
+
+  /* Carte CELI verrouillée */
+  .rpg-stat-card.locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .rpg-stat-card.locked::after { display: none; }
+  .rpg-stat-locked-label {
+    font-size: 10px;
+    color: var(--slate);
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Sous-infos carte Progression */
+  .rpg-prog-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+  .rpg-prog-item { flex: 1; }
+  .rpg-prog-item-label {
+    font-size: 10px;
+    color: var(--slate);
+    margin-bottom: 2px;
+  }
+  .rpg-prog-item-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Carte Classement */
+  .rpg-rank-row {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+    margin-top: 2px;
+  }
+  .rpg-rank-number {
+    font-size: 26px;
+    font-weight: 700;
+    color: #BA7517;
+    line-height: 1;
+  }
+  .rpg-rank-suffix { font-size: 14px; color: #BA7517; font-weight: 600; }
+  .rpg-rank-total  { font-size: 12px; color: var(--slate); margin-left: 3px; }
+  .rpg-rank-bar-wrap { margin-top: 8px; }
+  .rpg-rank-bar-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--slate);
+    margin-bottom: 4px;
+  }
+  .rpg-rank-track {
+    height: 5px;
+    background: rgba(0,0,0,0.07);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .rpg-rank-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #EF9F27;
+    transition: width 0.7s ease;
+  }
+
+  /* ═══════════════════════════════════════════
+     BANNIÈRE SEMAINE
+  ═══════════════════════════════════════════ */
+  .rpg-week-banner {
+    background: var(--card-bg, #F9FAFB);
+    border: 1px solid var(--border, #E5E7EB);
+    border-radius: 12px;
+    padding: 11px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 1.75rem;
+    gap: 12px;
+  }
+  .rpg-week-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--slate);
+    min-width: 0;
+  }
+  .rpg-week-tag {
+    background: #FAEEDA;
+    color: #854F0B;
+    border-radius: 6px;
+    padding: 2px 9px;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .rpg-week-cta {
+    font-size: 12px;
+    color: #185FA5;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+  .rpg-week-cta:hover { text-decoration: underline; }
+
+  /* ═══════════════════════════════════════════
+     BADGES SIDEBAR
+  ═══════════════════════════════════════════ */
+  .nav-badge-new {
+    margin-left: auto;
+    font-size: 9px;
+    background: #EAF3DE;
+    color: #3B6D11;
+    border-radius: 99px;
+    padding: 2px 7px;
+    font-weight: 600;
+  }
+  .nav-badge-soon {
+    margin-left: auto;
+    font-size: 9px;
+    background: #EEEDFE;
+    color: #534AB7;
+    border-radius: 99px;
+    padding: 2px 7px;
+    font-weight: 600;
+  }
+
+  /* ═══════════════════════════════════════════
+     RESPONSIVE
+  ═══════════════════════════════════════════ */
+  @media (max-width: 900px) {
+    .rpg-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .rpg-xp-block   { display: none; }
+  }
+  @media (max-width: 520px) {
+    .rpg-stats-grid { grid-template-columns: 1fr; }
+    .rpg-header     { flex-wrap: wrap; }
+  }
+  </style>
 </head>
 <body>
 
 <div class="app-layout">
 
-  <!-- Topbar -->
+  <!-- ── Topbar (inchangée) ── -->
   <header class="topbar">
     <a href="student-dashboard.html" class="topbar-brand">
       <div class="topbar-logo">$</div>
@@ -31,12 +416,20 @@
     </div>
   </header>
 
-  <!-- Sidebar -->
+  <!-- ── Sidebar ── -->
   <nav class="sidebar">
     <div class="sidebar-section-title">Navigation</div>
+
     <a class="nav-item active" href="student-dashboard.html">
       <span class="nav-icon">🏠</span> Tableau de bord
     </a>
+
+    <!-- NOUVEAU : Mon personnage -->
+    <a class="nav-item" href="character-editor.html" id="nav-character">
+      <span class="nav-icon">🧑</span> Mon personnage
+      <span class="nav-badge-new">nouveau</span>
+    </a>
+
     <a class="nav-item" href="modules.html">
       <span class="nav-icon">📚</span> Modules
       <span class="nav-badge new" id="sidebar-new-badge" style="display:none;">Nouveau!</span>
@@ -48,6 +441,12 @@
     <a class="nav-item locked" href="portfolio.html" id="nav-portfolio">
       <span class="nav-icon">💼</span> Mon portefeuille
       <span class="nav-badge locked-badge">🔒</span>
+    </a>
+
+    <!-- NOUVEAU : Classement -->
+    <a class="nav-item" href="leaderboard.html" id="nav-leaderboard">
+      <span class="nav-icon">🏆</span> Classement
+      <span class="nav-badge-soon">à venir</span>
     </a>
 
     <div class="sidebar-section-title" style="margin-top:16px;">Ressources</div>
@@ -83,43 +482,183 @@
     </a>
   </nav>
 
-  <!-- Contenu -->
+  <!-- ── Contenu principal ── -->
   <main class="main-content dashboard-main">
 
-    <!-- Message de bienvenue -->
-    <div class="flex-between mb-28">
-      <div>
-        <h2 style="font-size:26px; font-weight:700; color:var(--text);">
-          Bonjour, <span id="welcome-name">...</span> 👋
-        </h2>
-        <p class="text-muted" style="margin-top:4px;" id="welcome-sub">Voici où tu en es dans ton parcours.</p>
+    <!-- ══════════════════════════════════════════
+         NOUVEAU HEADER RPG
+         (remplace l'ancien bloc "Bonjour" + .dashboard-grid)
+    ══════════════════════════════════════════ -->
+
+    <!-- Ligne avatar + infos + XP -->
+    <div class="rpg-header">
+
+      <!-- Mini carte avatar cliquable -->
+      <a href="character-editor.html"
+         class="avatar-card-mini"
+         id="avatarCardMini"
+         data-bg="blue"
+         title="Modifier mon personnage">
+        <div class="av-top">
+          <!-- SVG de fallback affiché pendant le chargement -->
+          <!-- Remplacé par JS dès que les données avatar sont lues -->
+          <div id="avatarSVGMini">
+            <svg width="68" height="90" viewBox="0 0 45 63"
+                 xmlns="http://www.w3.org/2000/svg"
+                 style="image-rendering:pixelated; display:block;">
+              <ellipse cx="22" cy="61" rx="10" ry="1.8" fill="rgba(0,0,0,0.28)"/>
+              <rect x="5" y="35" width="35" height="24" rx="5" fill="#2E5FA0"/>
+              <polygon points="22,35 16,44 28,44" fill="#1a3a70"/>
+              <rect x="14" y="47" width="17" height="9" rx="2" fill="#1a3a70"/>
+              <rect x="0" y="35" width="7" height="16" rx="3" fill="#2E5FA0"/>
+              <ellipse cx="3" cy="53" rx="3" ry="3.5" fill="#F5C080"/>
+              <rect x="38" y="35" width="7" height="16" rx="3" fill="#2E5FA0"/>
+              <ellipse cx="42" cy="53" rx="3" ry="3.5" fill="#F5C080"/>
+              <rect x="18" y="30" width="9" height="7" rx="2" fill="#F5C080"/>
+              <ellipse cx="22" cy="18" rx="13" ry="13" fill="#F5C080"/>
+              <ellipse cx="9" cy="19" rx="3" ry="4" fill="#F5C080"/>
+              <ellipse cx="35" cy="19" rx="3" ry="4" fill="#F5C080"/>
+              <ellipse cx="22" cy="7" rx="13" ry="7" fill="#3D1F05"/>
+              <rect x="9" y="7" width="26" height="8" fill="#3D1F05"/>
+              <ellipse cx="9" cy="14" rx="3" ry="5" fill="#3D1F05"/>
+              <ellipse cx="35" cy="14" rx="3" ry="5" fill="#3D1F05"/>
+              <rect x="13" y="15" width="6" height="2" rx="1" fill="#2A1000"/>
+              <rect x="26" y="15" width="6" height="2" rx="1" fill="#2A1000"/>
+              <ellipse cx="15" cy="20" rx="4.5" ry="4" fill="white"/>
+              <ellipse cx="29" cy="20" rx="4.5" ry="4" fill="white"/>
+              <ellipse cx="15" cy="21" rx="3" ry="3" fill="#2255AA"/>
+              <ellipse cx="29" cy="21" rx="3" ry="3" fill="#2255AA"/>
+              <ellipse cx="15" cy="21" rx="1.5" ry="1.5" fill="#0A0A0A"/>
+              <ellipse cx="29" cy="21" rx="1.5" ry="1.5" fill="#0A0A0A"/>
+              <ellipse cx="15.8" cy="19.3" rx="0.8" ry="0.8" fill="white" opacity="0.95"/>
+              <ellipse cx="29.8" cy="19.3" rx="0.8" ry="0.8" fill="white" opacity="0.95"/>
+              <ellipse cx="22" cy="25" rx="2" ry="1.5" fill="#C8884A"/>
+              <path d="M17 28 Q22 32 27 28" stroke="#C8884A" stroke-width="1.5"
+                    fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="av-bottom">
+          <span class="av-stars" id="avatarStars">☆☆☆☆☆</span>
+          <span class="av-level" id="avatarLevel">Niv. 1</span>
+        </div>
+      </a>
+
+      <!-- Infos élève -->
+      <div class="rpg-header-info">
+        <div class="rpg-greeting-name">
+          Bonjour, <span id="welcome-name">…</span> 👋
+          <span class="rpg-level-badge">
+            <span class="rpg-level-dot"></span>
+            <span id="rpgAgeBadge">Étudiant · 17 ans</span>
+          </span>
+        </div>
+        <div class="rpg-greeting-sub" id="rpgSubtitle">
+          Chargement de ton parcours…
+        </div>
+        <a href="character-editor.html" class="rpg-edit-link">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Modifier mon personnage
+        </a>
       </div>
+
+      <!-- Barre XP (masquée sur mobile) -->
+      <div class="rpg-xp-block">
+        <div class="rpg-xp-label" id="rpgXpLabel">0 / 1 000 XP</div>
+        <div class="rpg-xp-track">
+          <div class="rpg-xp-fill" id="rpgXpFill" style="width:0%;"></div>
+        </div>
+        <div class="rpg-xp-next" id="rpgXpNext">+1 000 XP pour niveau 2</div>
+      </div>
+
+    </div><!-- fin .rpg-header -->
+
+    <!-- 4 cartes stats cliquables -->
+    <div class="rpg-stats-grid">
+
+      <!-- 1. Valeur nette → portfolio.html -->
+      <a href="portfolio.html" class="rpg-stat-card" id="cardNetWorth">
+        <div class="rpg-stat-accent" style="background:#1D9E75;"></div>
+        <span class="rpg-stat-icon">💰</span>
+        <div class="rpg-stat-label">Valeur nette</div>
+        <div class="rpg-stat-value" style="color:#1D9E75;" id="statNetWorth">0,00 $</div>
+        <div class="rpg-stat-sub" id="statNetWorthSub">Compte épargne ordinaire</div>
+      </a>
+
+      <!-- 2. Progression → modules.html -->
+      <a href="modules.html" class="rpg-stat-card" id="cardProgress">
+        <div class="rpg-stat-accent" style="background:#378ADD;"></div>
+        <span class="rpg-stat-icon">📚</span>
+        <div class="rpg-stat-label">Progression</div>
+        <div class="rpg-stat-value" style="color:#185FA5;">
+          Ch.&nbsp;<span id="statChapCurrent">0</span><span style="font-size:14px;color:#9CA3AF;font-weight:400;"> / 5</span>
+        </div>
+        <div class="rpg-prog-row">
+          <div class="rpg-prog-item">
+            <div class="rpg-prog-item-label">Quiz réussis</div>
+            <div class="rpg-prog-item-val" id="statQuizCount">0</div>
+          </div>
+          <div style="width:1px;background:rgba(0,0,0,0.07);"></div>
+          <div class="rpg-prog-item">
+            <div class="rpg-prog-item-label">Score moyen</div>
+            <div class="rpg-prog-item-val" id="statQuizAvg">—</div>
+          </div>
+        </div>
+      </a>
+
+      <!-- 3. Stat. moyenne → character-editor.html -->
+      <a href="character-editor.html" class="rpg-stat-card" id="cardRPGStats">
+        <div class="rpg-stat-accent" style="background:#7F77DD;"></div>
+        <span class="rpg-stat-icon">✨</span>
+        <div class="rpg-stat-label">Stat. moyenne</div>
+        <div class="rpg-stat-value" style="color:#534AB7;">
+          <span id="statRPGAvg">5,0</span><span style="font-size:13px;color:#9CA3AF;font-weight:400;"> /10</span>
+        </div>
+        <div class="rpg-stat-sub" id="statRPGSub">Santé · Connaissances · 3 autres</div>
+      </a>
+
+      <!-- 4. Classement → leaderboard.html -->
+      <a href="leaderboard.html" class="rpg-stat-card" id="cardRank">
+        <div class="rpg-stat-accent" style="background:#EF9F27;"></div>
+        <span class="rpg-stat-icon">🏆</span>
+        <div class="rpg-stat-label">Classement</div>
+        <div class="rpg-rank-row">
+          <span class="rpg-rank-number" id="statRankPos">—</span>
+          <span class="rpg-rank-suffix" id="statRankSuffix"></span>
+          <span class="rpg-rank-total" id="statRankTotal"></span>
+        </div>
+        <div class="rpg-rank-bar-wrap">
+          <div class="rpg-rank-bar-meta">
+            <span id="statRankPct">Calcul en cours…</span>
+            <span id="statRankDelta"></span>
+          </div>
+          <div class="rpg-rank-track">
+            <div class="rpg-rank-fill" id="statRankFill" style="width:0%;"></div>
+          </div>
+        </div>
+      </a>
+
+    </div><!-- fin .rpg-stats-grid -->
+
+    <!-- Bannière semaine -->
+    <div class="rpg-week-banner">
+      <div class="rpg-week-left">
+        <span class="rpg-week-tag">Cette semaine</span>
+        <span id="rpgWeekMsg">Chargement…</span>
+      </div>
+      <a href="modules.html" class="rpg-week-cta" id="rpgWeekCta">
+        Commencer →
+      </a>
     </div>
 
-    <!-- Stats -->
-    <div class="dashboard-grid">
-      <div class="stat-card">
-        <div class="stat-label">Solde CELI disponible</div>
-        <div class="stat-value green font-mono" id="stat-balance">0,00 $</div>
-        <div class="stat-sub">Fonds non investis</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Modules complétés</div>
-        <div class="stat-value" id="stat-modules">0 / 5</div>
-        <div class="stat-sub">Sur les 5 chapitres du cours</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Quiz réussis</div>
-        <div class="stat-value green" id="stat-quizzes">0</div>
-        <div class="stat-sub">Score moyen : <span id="stat-avg-score">—</span></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Valeur du portefeuille</div>
-        <div class="stat-value font-mono" id="stat-portfolio">— $</div>
-        <div class="stat-sub" id="stat-portfolio-sub">Débloqué au module 5</div>
-      </div>
-    </div>
-  <!-- Babillard -->
+    <!-- ══════════════════════════════════════════
+         CONTENU EXISTANT — inchangé à partir d'ici
+    ══════════════════════════════════════════ -->
+
+    <!-- Babillard -->
     <div class="cork-board" id="corkBoard">
       <div class="cork-title">
         <i>📌</i>
@@ -135,10 +674,9 @@
       </div>
     </div>
 
-<!-- Modules + Question de la semaine -->
+    <!-- Modules + Question de la semaine -->
     <div class="week-question-wrap">
 
-      <!-- Progression des modules -->
       <div class="card mb-28">
         <div class="flex-between mb-20">
           <h3 class="card-title" style="margin-bottom:0;">Mes modules</h3>
@@ -151,12 +689,11 @@
         </div>
       </div>
 
-      <!-- Question de la semaine -->
       <div class="quiz-widget" id="quizWidget">
         <div class="quiz-already">Chargement de la question…</div>
       </div>
 
-    </div><!-- fin .week-question-wrap -->
+    </div>
 
     <!-- Activité récente -->
     <div class="card" style="grid-column: 1 / -1; width: 100%;">
@@ -170,7 +707,7 @@
 
   </main>
 
-  <!-- Fil actualités économiques -->
+  <!-- ── Fil actualités (inchangé) ── -->
   <aside class="news-sidebar" id="newsSidebar">
 
     <div id="pinnedSection" style="display:none">
@@ -185,7 +722,7 @@
     <div class="news-section-header news-header-top">
       <div>
         <h3 class="news-title">Actualités économiques</h3>
-       <span class="news-source-badge">Actualités éco</span>
+        <span class="news-source-badge">Actualités éco</span>
       </div>
       <button class="news-refresh-btn" id="news-refresh-btn" title="Rafraîchir">↻</button>
     </div>
@@ -203,9 +740,219 @@
 
   </aside>
 
-</div>
+</div><!-- fin .app-layout -->
 
+<!-- ── Scripts existants (inchangés) ── -->
 <script type="module" src="../js/firebase-init.js"></script>
 <script type="module" src="../js/student-dashboard.js"></script>
+
+<!-- ── Script RPG Dashboard (nouveau) ── -->
+<script type="module">
+// ─── Imports Firebase ───────────────────────────────────────────────────────
+import { db, auth } from '../js/firebase-init.js';
+import {
+  doc, getDoc, collection, getDocs, query, orderBy
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+// ─── Import du générateur d'avatar ─────────────────────────────────────────
+let generateAvatarSVG = null;
+try {
+  const mod = await import('../js/character.js');
+  generateAvatarSVG = mod.generateAvatarSVG;
+} catch(e) {
+  // character.js absent : on garde l'avatar SVG de fallback déjà en place
+  console.info('[RPG] character.js non chargé — avatar statique utilisé.');
+}
+
+// ─── Utilitaire ────────────────────────────────────────────────────────────
+function $id(id) { return document.getElementById(id); }
+function setText(id, txt) { const el = $id(id); if (el) el.textContent = txt; }
+
+// ─── Point d'entrée ─────────────────────────────────────────────────────────
+auth.onAuthStateChanged(async (user) => {
+  if (!user) return;
+  try {
+    await loadAndRender(user.uid);
+  } catch(err) {
+    console.error('[RPG] Erreur chargement:', err);
+  }
+});
+
+async function loadAndRender(uid) {
+
+  // 1. Profil utilisateur
+  const userSnap = await getDoc(doc(db, 'users', uid));
+  const u = userSnap.exists() ? userSnap.data() : {};
+
+  const displayName = u.displayName  || 'Élève';
+  const celiBalance = u.celiBalance  || 0;
+  const rpgLevel    = u.rpgLevel     || 1;
+  const rpgXP       = u.rpgXP       || 0;
+  const rpgAge      = u.rpgAge      || 17;
+  const rpgWeek     = u.rpgWeek     || 1;
+  const rpgStats    = u.rpgStats    || {
+    sante:5, connaissances:5, habiletes:5, organisation:5, influence:5
+  };
+  const avatarData  = u.avatar      || {};
+  const ch5Done     = u.ch5Completed || false;
+  const rankDelta   = u.rankDelta   ?? null;
+
+  // 2. Progression modules & quiz
+  const progressSnap = await getDocs(collection(db, 'users', uid, 'progress'));
+  let modulesCompleted = 0;
+  let quizTotal = 0;
+  let quizScoreSum = 0;
+  progressSnap.forEach(d => {
+    const p = d.data();
+    if (p.completed) modulesCompleted++;
+    if (p.quizScore != null) {
+      quizTotal++;
+      quizScoreSum += Number(p.quizScore);
+    }
+  });
+  const quizAvg = quizTotal > 0 ? Math.round(quizScoreSum / quizTotal) : null;
+
+  // 3. Classement (tri par celiBalance décroissant)
+  let rankPos = null, rankTotal = null;
+  try {
+    const allSnap = await getDocs(
+      query(collection(db, 'users'), orderBy('celiBalance', 'desc'))
+    );
+    rankTotal = allSnap.size;
+    let pos = 1;
+    allSnap.forEach(d => {
+      if (d.id === uid) rankPos = pos;
+      pos++;
+    });
+  } catch(e) {
+    console.warn('[RPG] Classement non dispo (index manquant?):', e.message);
+  }
+
+  // 4. Remplir l'interface
+  renderAll({
+    displayName, celiBalance, rpgLevel, rpgXP, rpgAge, rpgWeek,
+    avatarData, ch5Done, rpgStats, rankDelta,
+    modulesCompleted, quizTotal, quizAvg,
+    rankPos, rankTotal
+  });
+}
+
+function renderAll(d) {
+  const {
+    displayName, celiBalance, rpgLevel, rpgXP, rpgAge, rpgWeek,
+    avatarData, ch5Done, rpgStats, rankDelta,
+    modulesCompleted, quizTotal, quizAvg,
+    rankPos, rankTotal
+  } = d;
+
+  // ── Nom (welcome-name déjà utilisé par student-dashboard.js — on garde) ──
+  // On complète juste les nouveaux éléments RPG
+  setText('rpgAgeBadge', `Étudiant · ${rpgAge} ans`);
+
+  const chapLabel = modulesCompleted < 5
+    ? `Ch. ${modulesCompleted + 1} en cours`
+    : 'Tous les chapitres complétés 🎉';
+  setText('rpgSubtitle', `Semaine ${rpgWeek} sur 32 · ${chapLabel}`);
+
+  // ── Barre XP ──
+  const XP_PER_LVL = 1000;
+  const xpInLvl    = rpgXP % XP_PER_LVL;
+  const xpPct      = Math.round((xpInLvl / XP_PER_LVL) * 100);
+  const xpToNext   = XP_PER_LVL - xpInLvl;
+  setText('rpgXpLabel', `${xpInLvl.toLocaleString('fr-CA')} / ${XP_PER_LVL.toLocaleString('fr-CA')} XP`);
+  setText('rpgXpNext', `+${xpToNext.toLocaleString('fr-CA')} XP pour niveau ${rpgLevel + 1}`);
+  const xpFill = $id('rpgXpFill');
+  if (xpFill) xpFill.style.width = xpPct + '%';
+
+  // ── Avatar ──
+  const stars = '★'.repeat(Math.min(rpgLevel, 5)) + '☆'.repeat(Math.max(0, 5 - rpgLevel));
+  setText('avatarStars', stars);
+  setText('avatarLevel', `Niv. ${rpgLevel}`);
+  const card = $id('avatarCardMini');
+  if (card && avatarData.bgColor) card.setAttribute('data-bg', avatarData.bgColor);
+  if (generateAvatarSVG && Object.keys(avatarData).length > 0) {
+    const svgStr = generateAvatarSVG(avatarData, 68);
+    const cont = $id('avatarSVGMini');
+    if (cont) cont.innerHTML = svgStr;
+  }
+
+  // ── Carte valeur nette ──
+  const netFormatted = Math.abs(celiBalance).toLocaleString('fr-CA', {
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  });
+  const netSign = celiBalance < 0 ? '−' : '';
+  setText('statNetWorth', `${netSign}${netFormatted} $`);
+  setText('statNetWorthSub', ch5Done ? 'CELI · Débloqué ✓' : 'Compte épargne ordinaire');
+  const netEl = document.querySelector('#cardNetWorth .rpg-stat-value');
+  if (netEl) netEl.style.color = celiBalance >= 0 ? '#1D9E75' : '#DC2626';
+
+  // ── Carte progression ──
+  setText('statChapCurrent', modulesCompleted);
+  setText('statQuizCount', quizTotal);
+  setText('statQuizAvg', quizAvg != null ? `${quizAvg} %` : '—');
+
+  // ── Carte stats RPG ──
+  const vals = Object.values(rpgStats);
+  const avg  = vals.length
+    ? (vals.reduce((a, b) => a + b, 0) / vals.length)
+    : 5;
+  setText('statRPGAvg', avg.toFixed(1).replace('.', ','));
+  const STAT_NAMES = {
+    sante:'Santé', connaissances:'Connaissances',
+    habiletes:'Habiletés', organisation:'Organisation', influence:'Influence'
+  };
+  const topEntry = Object.entries(rpgStats).sort((a, b) => b[1] - a[1])[0];
+  if (topEntry) {
+    const topName = STAT_NAMES[topEntry[0]] || topEntry[0];
+    setText('statRPGSub', `Meilleure stat : ${topName} (${topEntry[1]}/10)`);
+  }
+
+  // ── Carte classement ──
+  if (rankPos && rankTotal) {
+    setText('statRankPos', rankPos);
+    setText('statRankSuffix', rankPos === 1 ? 'er' : 'e');
+    setText('statRankTotal', `/ ${rankTotal} élèves`);
+    const pct = Math.round(((rankTotal - rankPos) / rankTotal) * 100);
+    setText('statRankPct', `Top ${100 - pct} %`);
+    const fillEl = $id('statRankFill');
+    if (fillEl) fillEl.style.width = pct + '%';
+
+    if (rankDelta !== null) {
+      const deltaEl = $id('statRankDelta');
+      if (deltaEl) {
+        if (rankDelta > 0) {
+          deltaEl.textContent = `↑ ${rankDelta} place${rankDelta > 1 ? 's' : ''}`;
+          deltaEl.style.color = '#16A34A';
+        } else if (rankDelta < 0) {
+          deltaEl.textContent = `↓ ${Math.abs(rankDelta)} place${Math.abs(rankDelta) > 1 ? 's' : ''}`;
+          deltaEl.style.color = '#DC2626';
+        } else {
+          deltaEl.textContent = '= stable';
+          deltaEl.style.color = '#9CA3AF';
+        }
+      }
+    }
+  } else {
+    setText('statRankPos', '—');
+    setText('statRankPct', 'Calcul en cours…');
+  }
+
+  // ── Bannière semaine ──
+  let weekMsg  = 'Événement de la semaine disponible.';
+  let weekHref = 'modules.html';
+  if (modulesCompleted === 0) {
+    weekMsg  = 'Commence le Chapitre 1 pour débloquer des récompenses!';
+  } else if (modulesCompleted < 5) {
+    weekMsg  = `Chapitre ${modulesCompleted + 1} disponible — continue ta progression!`;
+  } else {
+    weekMsg  = 'Tous les chapitres complétés — consulte ton classement!';
+    weekHref = 'leaderboard.html';
+  }
+  setText('rpgWeekMsg', weekMsg);
+  const ctaEl = $id('rpgWeekCta');
+  if (ctaEl) ctaEl.href = weekHref;
+}
+</script>
+
 </body>
 </html>

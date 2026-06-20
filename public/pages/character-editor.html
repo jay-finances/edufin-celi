@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ÉduFin — Mon personnage</title>
+<style>
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0E1220;
+  --surface:   #1A2035;
+  --surface2:  #232B42;
+  --border:    rgba(255,255,255,0.08);
+  --accent:    #4A8FD4;
+  --accent2:   #FFD700;
+  --text:      #E8EAF0;
+  --text-muted:#8A94B0;
+  --green:     #7EE8A2;
+  --red:       #FF8080;
+  --radius:    10px;
+  --font:      system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.header-logo {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent2);
+  letter-spacing: 0.5px;
+}
+.header-logo span { color: var(--accent); }
+.btn-save {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-save:hover { opacity: 0.85; }
+.btn-save:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Layout principal ── */
+.main {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 0;
+  flex: 1;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 20px 16px;
+  gap: 20px;
+}
+
+/* ── Panneau prévisualisation ── */
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 76px;
+  align-self: start;
+}
+
+.card-preview {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 2px solid rgba(0,0,0,0.4);
+  width: 180px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  transition: transform 0.2s;
+}
+.card-preview:hover { transform: translateY(-2px); }
+
+.card-top {
+  padding: 14px 10px 8px;
+  text-align: center;
+  position: relative;
+  min-height: 220px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.card-top svg { display: block; }
+.influence-badge {
+  position: absolute;
+  top: 6px; right: 6px;
+  background: var(--accent2);
+  color: #5A3A00;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: none;
+}
+.card-bottom {
+  background: #2A2A3E;
+  padding: 8px 10px 10px;
+  border-top: 2px solid rgba(0,0,0,0.4);
+  text-align: center;
+}
+.card-name {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+}
+.card-stars {
+  color: var(--accent2);
+  font-size: 13px;
+  letter-spacing: 2px;
+  margin-top: 3px;
+}
+.card-net {
+  font-size: 11px;
+  margin-top: 3px;
+  color: var(--green);
+}
+.card-level {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Stats rapides sous la carte */
+.stats-mini {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.stats-mini-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+}
+.stat-label { font-size: 12px; color: var(--text-muted); }
+.stat-bar-wrap {
+  flex: 1;
+  margin: 0 10px;
+  height: 5px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.stat-bar { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.stat-val { font-size: 12px; font-weight: 500; color: var(--text); min-width: 18px; text-align: right; }
+
+/* ── Panneau options ── */
+.options-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.section-header {
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-header .lock-tag {
+  font-size: 9px;
+  background: rgba(255,215,0,0.15);
+  color: var(--accent2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 400;
+}
+
+.options-grid {
+  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Bouton option (chip) */
+.opt-btn {
+  border: 1.5px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.opt-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--text);
+  background: rgba(74,143,212,0.1);
+}
+.opt-btn.active {
+  border-color: var(--accent);
+  background: rgba(74,143,212,0.2);
+  color: var(--text);
+  font-weight: 500;
+}
+.opt-btn.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.opt-btn .lock-icon { font-size: 10px; }
+
+/* Swatch couleur dans le bouton */
+.color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+
+/* Boutique highlight */
+.opt-btn.boutique-item { border-color: rgba(255,215,0,0.3); }
+.opt-btn.boutique-item:hover:not(:disabled) { border-color: var(--accent2); background: rgba(255,215,0,0.1); }
+
+/* ── Toast de sauvegarde ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #1E3A2A;
+  color: var(--green);
+  border: 1px solid var(--green);
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: transform 0.3s;
+  z-index: 100;
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .main { grid-template-columns: 1fr; padding: 12px; }
+  .preview-panel { position: static; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .card-preview { width: 140px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">Édu<span>Fin</span> RPG</div>
+  <button class="btn-save" id="btnSave" onclick="saveAvatar()">Sauvegarder</button>
+</header>
+
+<main class="main">
+
+  <!-- ── PRÉVISUALISATION ── -->
+  <div class="preview-panel">
+
+    <div class="card-preview" id="cardPreview">
+      <div class="card-top" id="cardTop" style="background: linear-gradient(170deg, #4A8FD4 30%, #2A5FA0 100%);">
+        <div class="influence-badge" id="influenceBadge"></div>
+        <div id="avatarSVG"></div>
+      </div>
+      <div class="card-bottom">
+        <div class="card-name" id="cardName">Chargement…</div>
+        <div class="card-stars" id="cardStars">★★☆☆☆</div>
+        <div class="card-net" id="cardNet">Valeur nette : 0 $</div>
+        <div class="card-level" id="cardLevel">Niv. 1</div>
+      </div>
+    </div>
+
+    <!-- Stats mini -->
+    <div class="stats-mini">
+      <div class="stats-mini-title">Statistiques</div>
+      <div class="stat-row">
+        <span class="stat-label">Santé</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" id="bar-sante" style="background:#7EE8A2;"></div></div>
+        <span class="stat-val" id="val-sante">5</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Connaissances</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" id="bar-conn" style="background:#4A8FD4;"></div></div>
+        <span class="stat-val" id="val-conn">5</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Habiletés</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" id="bar-hab" style="background:#EF9F27;"></div></div>
+        <span class="stat-val" id="val-hab">5</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Organisation</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" id="bar-org" style="background:#9F7EE8;"></div></div>
+        <span class="stat-val" id="val-org">5</span>
+      </div>
+      <div class="stat-row" style="margin-bottom:0;">
+        <span class="stat-label">Influence</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" id="bar-inf" style="background:#FF8080;"></div></div>
+        <span class="stat-val" id="val-inf">5</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── OPTIONS ── -->
+  <div class="options-panel" id="optionsPanel">
+    <!-- Généré par JS -->
+  </div>
+
+</main>
+
+<div class="toast" id="toast">✓ Personnage sauvegardé!</div>
+
+<!-- ═══════════════════════════════════════════
+     SCRIPT PRINCIPAL
+════════════════════════════════════════════ -->
+<script type="module">
+// ── Import du moteur (en prod : remplacer par le vrai chemin)
+// import { AVATAR_OPTIONS, DEFAULT_AVATAR, generateAvatarSVG, isUnlocked } from './character.js';
+// Pour la démo autonome, on intègre le catalogue directement :
+
+const SKIN_TONES = [
+  { id:'pale',    label:'Claire',    color:'#FBDFC0', shadow:'#D4A876' },
+  { id:'light',   label:'Lumineuse', color:'#F5C080', shadow:'#C8884A' },
+  { id:'medium',  label:'Dorée',     color:'#E8A060', shadow:'#B86830' },
+  { id:'tan',     label:'Hâlée',     color:'#C07840', shadow:'#8A4A18' },
+  { id:'dark',    label:'Foncée',    color:'#6B3010', shadow:'#3A1505' },
+  { id:'deep',    label:'Profonde',  color:'#3A1A05', shadow:'#1A0A00' },
+];
+
+const CATALOG = {
+  skinTone:  { label:'Teinte de peau',       opts: SKIN_TONES },
+  faceShape: { label:'Forme du visage',       opts: [{id:'round',label:'Ronde'},{id:'oval',label:'Ovale'},{id:'square',label:'Carrée'},{id:'heart',label:'En cœur'},{id:'long',label:'Allongée'}] },
+  eyeShape:  { label:'Yeux',                 opts: [{id:'round',label:'Ronds'},{id:'almond',label:'Amande'},{id:'wide',label:'Grands'},{id:'narrow',label:'Petits'},{id:'hooded',label:'Tombants'}] },
+  eyeColor:  { label:"Couleur des yeux",     opts: [{id:'brown',label:'Brun',color:'#5A2A08'},{id:'darkbrown',label:'Brun foncé',color:'#2A1008'},{id:'blue',label:'Bleu',color:'#2255AA'},{id:'green',label:'Vert',color:'#1A7A40'},{id:'hazel',label:'Noisette',color:'#7A4A10'},{id:'teal',label:'Turquoise',color:'#1A7A90'},{id:'gray',label:'Gris',color:'#5A6A7A'},{id:'amber',label:'Ambré',color:'#AA6A00'}] },
+  hairStyle: { label:'Coiffure',             opts: [{id:'short',label:'Courte classique'},{id:'long',label:'Longue'},{id:'curly',label:'Frisée'},{id:'bun',label:'Chignon'},{id:'braids',label:'Tresses'},{id:'shaved',label:'Rasée'},{id:'undercut',label:'Undercut'},{id:'afro',label:'Afro'}] },
+  hairColor: { label:'Couleur des cheveux',  opts: [{id:'black',label:'Noir',color:'#0A0A0A'},{id:'darkbrown',label:'Brun foncé',color:'#3D1F05'},{id:'brown',label:'Brun',color:'#6B3A10'},{id:'auburn',label:'Auburn',color:'#8B2000'},{id:'red',label:'Roux',color:'#B03200'},{id:'blonde',label:'Blond',color:'#C8A030'},{id:'lightblonde',label:'Blond clair',color:'#E0C060'},{id:'white',label:'Blanc/Gris',color:'#B0B0B0'},{id:'blue',label:'Bleu',color:'#1A40AA',unlock:'boutique'},{id:'pink',label:'Rose',color:'#CC4080',unlock:'boutique'}] },
+  mouth:     { label:'Bouche',               opts: [{id:'smile',label:'Sourire doux'},{id:'grin',label:'Grand sourire'},{id:'neutral',label:'Neutre'},{id:'smirk',label:'En coin'},{id:'pout',label:'Moue'},{id:'surprised',label:'Surprise'}] },
+  facial:    { label:'Pilosité',             opts: [{id:'none',label:'Aucune'},{id:'stubble',label:'Duvet'},{id:'mustache',label:'Moustache'},{id:'short_beard',label:'Barbe courte'},{id:'long_beard',label:'Barbe longue'},{id:'goatee',label:'Bouc'}] },
+  glasses:   { label:'Lunettes',             opts: [{id:'none',label:'Aucunes'},{id:'round',label:'Rondes'},{id:'rect',label:'Rectangulaires'},{id:'cateye',label:'Cat-eye',unlock:'boutique'},{id:'tinted',label:'Teintées',unlock:'boutique'},{id:'monocle',label:'Monocle',unlock:'rare'}] },
+  earrings:  { label:"Boucles d'oreilles",   opts: [{id:'none',label:'Aucunes'},{id:'gold_studs',label:'Clous dorés'},{id:'black_studs',label:'Clous noirs'},{id:'hoops',label:'Anneaux',unlock:'boutique'},{id:'drops',label:'Pendants argent',unlock:'boutique'},{id:'chandelier',label:'Chandelier',unlock:'rare'}] },
+  outfit:    { label:'Tenue',                opts: [{id:'tshirt_gray',label:'T-shirt gris'},{id:'hoodie_blue',label:'Hoodie bleu'},{id:'hoodie_black',label:'Hoodie noir'},{id:'shirt_red',label:'Chandail rouge'},{id:'shirt_green',label:'Chandail vert'},{id:'jacket_denim',label:'Veste en jean',unlock:'boutique'},{id:'coat_luxury',label:'Manteau chic',unlock:'boutique',influence:2},{id:'jersey',label:'Jersey sport',unlock:'boutique'},{id:'suit',label:'Veston',unlock:'ch5'}] },
+  bgColor:   { label:'Fond de carte',        opts: [{id:'blue',label:'Bleu',from:'#4A8FD4',to:'#2A5FA0'},{id:'red',label:'Rouge',from:'#D04060',to:'#8A1A30'},{id:'green',label:'Vert',from:'#3AAA5A',to:'#1A6A30'},{id:'gold',label:'Doré',from:'#D4A000',to:'#8A6000'},{id:'purple',label:'Violet',from:'#7040D0',to:'#3A1A80'},{id:'teal',label:'Sarcelle',from:'#20A0A0',to:'#0A6060'}] },
+};
+
+// État courant
+let av = {
+  skinTone:'light', faceShape:'round', eyeShape:'round', eyeColor:'brown',
+  hairStyle:'short', hairColor:'darkbrown', mouth:'smile', facial:'none',
+  glasses:'none', earrings:'none', outfit:'tshirt_gray', bgColor:'blue',
+};
+
+// Progression simulée (en prod: viendra de Firestore)
+const progress = { ageUnlocked18: false, ch5Completed: false, rareItems: [] };
+const profile  = { displayName: 'Alex Lebel', level: 2, netWorth: 850 };
+const stats    = { sante:5, connaissances:5, habiletes:5, organisation:5, influence:5 };
+
+// ── Utilitaires SVG ──
+const el  = (cx,cy,rx,ry,f,x='')=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${f}" ${x}/>`;
+const re  = (x,y,w,h,f,rx=0,x2='')=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${f}" ${x2}/>`;
+const pa  = (d,s,sw,f='none',x='')=>`<path d="${d}" stroke="${s}" stroke-width="${sw}" fill="${f}" stroke-linecap="round" ${x}/>`;
+const li  = (x1,y1,x2,y2,s,sw,x='')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${s}" stroke-width="${sw}" ${x}/>`;
+
+function darken(hex) {
+  try {
+    const n=parseInt(hex.replace('#',''),16);
+    return '#'+[n>>16,( n>>8)&0xFF,n&0xFF].map(v=>Math.max(0,v-50).toString(16).padStart(2,'0')).join('');
+  } catch{ return '#0A0A0A'; }
+}
+
+function buildSVG(a, size=130) {
+  const skin  = SKIN_TONES.find(o=>o.id===a.skinTone)||SKIN_TONES[1];
+  const hcObj = CATALOG.hairColor.opts.find(o=>o.id===a.hairColor)||CATALOG.hairColor.opts[0];
+  const icObj = CATALOG.eyeColor.opts.find(o=>o.id===a.eyeColor)||CATALOG.eyeColor.opts[0];
+  const bgObj = CATALOG.bgColor.opts.find(o=>o.id===a.bgColor)||CATALOG.bgColor.opts[0];
+  const outfitObj = CATALOG.outfit.opts.find(o=>o.id===a.outfit)||CATALOG.outfit.opts[0];
+
+  const sc=skin.color, ss=skin.shadow, hc=hcObj.color, ic=icObj.color;
+  const W=45,H=63;
+  let L=[];
+
+  // Ombre
+  L.push(el(22,61,10,1.8,'rgba(0,0,0,0.28)'));
+
+  // Tenues
+  const OD={
+    tshirt_gray: {b:'#909090',d:'#707070',t:'tshirt'},
+    hoodie_blue: {b:'#2E5FA0',d:'#1a3a70',t:'hoodie'},
+    hoodie_black:{b:'#2A2A2A',d:'#111',   t:'hoodie'},
+    shirt_red:   {b:'#C03050',d:'#801A30',t:'shirt'},
+    shirt_green: {b:'#2A8A40',d:'#1A5A28',t:'shirt'},
+    jacket_denim:{b:'#3A5A8A',d:'#1A3A6A',t:'jacket'},
+    coat_luxury: {b:'#1A1A2A',d:'#2A2A3A',t:'coat'},
+    jersey:      {b:'#CC2020',d:'#881010',t:'jersey'},
+    suit:        {b:'#2A3A5A',d:'#1A2A4A',t:'suit'},
+  };
+  const od=OD[a.outfit]||OD.tshirt_gray;
+  L.push(re(5,35,35,24,od.b,5));
+  if(od.t==='hoodie'){L.push(`<polygon points="22,35 16,44 28,44" fill="${od.d}"/>`);L.push(re(14,47,17,9,od.d,2));}
+  else if(od.t==='tshirt'){L.push(re(17,39,11,9,od.d,2));}
+  else if(od.t==='coat'){L.push(`<polygon points="22,35 14,46 22,46" fill="${od.d}"/>`);L.push(`<polygon points="22,35 30,46 22,46" fill="${od.d}"/>`);L.push(el(16,42,3,3,'#FFD700'));L.push(el(16,42,1.5,1.5,'#AA8800'));}
+  else if(od.t==='jacket'){L.push(re(5,35,6,24,od.d,0,'opacity="0.5"'));L.push(re(34,35,6,24,od.d,0,'opacity="0.5"'));}
+  else if(od.t==='suit'){L.push(`<polygon points="22,35 15,46 22,46" fill="${od.d}"/>`);L.push(`<polygon points="22,35 29,46 22,46" fill="${od.d}"/>`);L.push(re(20,42,4,3,'#E8E8E8',0,'opacity="0.8"'));}
+
+  // Bras
+  L.push(re(0,35,7,16,od.b,3));L.push(el(3,53,3,3.5,sc));
+  L.push(re(38,35,7,16,od.b,3));L.push(el(42,53,3,3.5,sc));
+
+  // Cou
+  L.push(re(18,30,9,7,sc,2));
+
+  // Cheveux derrière
+  if(['long','braids','afro'].includes(a.hairStyle)){
+    const hw=a.hairStyle==='afro'?7:5;
+    L.push(re(6,14,hw,28,hc,2.5));L.push(re(34-hw+1,14,hw,28,hc,2.5));
+    if(a.hairStyle==='braids'){for(let i=0;i<4;i++){L.push(li(8,18+i*7,8,24+i*7,'rgba(0,0,0,0.3)',1));L.push(li(37,18+i*7,37,24+i*7,'rgba(0,0,0,0.3)',1));}}
+  }
+
+  // Tête
+  if(a.faceShape==='heart'){L.push(el(22,14,13,10,sc));L.push(el(22,22,9,9,sc));}
+  else if(a.faceShape==='square'){L.push(re(9,6,27,25,sc,3));}
+  else{const FS={round:{rx:13,ry:13},oval:{rx:10,ry:14},long:{rx:9,ry:15}};const fs=FS[a.faceShape]||FS.round;L.push(el(22,18,fs.rx,fs.ry,sc));}
+  L.push(el(9,19,3,4,sc));L.push(el(35,19,3,4,sc));
+
+  // Cheveux devant
+  if(a.hairStyle!=='shaved'){
+    if(a.hairStyle==='afro'){
+      L.push(el(22,8,16,10,hc));L.push(re(6,10,30,10,hc));L.push(el(7,16,4,6,hc));L.push(el(37,16,4,6,hc));
+      L.push(el(12,7,4,4,hc,'opacity="0.7"'));L.push(el(19,5,4,4,hc,'opacity="0.7"'));L.push(el(26,5,4,4,hc,'opacity="0.7"'));L.push(el(33,7,4,4,hc,'opacity="0.7"'));
+    } else if(a.hairStyle==='bun'){
+      L.push(el(22,8,13,7,hc));L.push(re(9,8,26,7,hc));L.push(el(22,4,6,5,hc));L.push(el(9,14,3,5,hc));L.push(el(35,14,3,5,hc));
+    } else if(a.hairStyle==='undercut'){
+      L.push(el(22,7,13,6,hc));L.push(re(9,7,26,5,hc));L.push(el(10,14,2,4,hc,'opacity="0.5"'));L.push(el(34,14,2,4,hc,'opacity="0.5"'));
+    } else {
+      L.push(el(22,7,13,7,hc));L.push(re(9,7,26,8,hc));L.push(el(9,14,3,5,hc));L.push(el(35,14,3,5,hc));
+      if(a.hairStyle==='curly'){L.push(el(14,6,4,4,hc,'opacity="0.7"'));L.push(el(21,4,4,4,hc,'opacity="0.7"'));L.push(el(28,6,4,4,hc,'opacity="0.7"'));L.push(el(10,11,3,3,hc,'opacity="0.5"'));L.push(el(34,11,3,3,hc,'opacity="0.5"'));}
+    }
+  }
+
+  // Sourcils
+  L.push(re(13,15,6,2,darken(hc),1));L.push(re(26,15,6,2,darken(hc),1));
+
+  // Yeux
+  const EP={round:{rx:4.5,ry:4,iy:0},almond:{rx:5,ry:3,iy:0.5},wide:{rx:5,ry:5,iy:0},narrow:{rx:4,ry:2.5,iy:0.5},hooded:{rx:4.5,ry:3.5,iy:0.5}};
+  const ep=EP[a.eyeShape]||EP.round;
+  L.push(el(15,20,ep.rx,ep.ry,'white'));L.push(el(29,20,ep.rx,ep.ry,'white'));
+  L.push(el(15,20+ep.iy,3,3,ic));L.push(el(29,20+ep.iy,3,3,ic));
+  L.push(el(15,20+ep.iy,1.5,1.5,'#0A0A0A'));L.push(el(29,20+ep.iy,1.5,1.5,'#0A0A0A'));
+  L.push(el(15.8,19.3,.8,.8,'white','opacity="0.95"'));L.push(el(29.8,19.3,.8,.8,'white','opacity="0.95"'));
+  if(['chandelier','drops'].includes(a.earrings)){L.push(el(15,18.5,5.5,1.5,'#3A0A20','opacity="0.35"'));L.push(el(29,18.5,5.5,1.5,'#3A0A20','opacity="0.35"'));}
+
+  // Nez
+  L.push(el(22,25,2,1.5,ss));
+
+  // Bouche
+  const M={
+    smile:    ()=>pa('M17 28 Q22 32 27 28',ss,1.5),
+    grin:     ()=>pa('M16 28 Q22 33 28 28','#4A1A0A',1.5)+pa('M17 28 Q22 32 27 28','white',1.1,'none','opacity="0.8"'),
+    neutral:  ()=>re(15,28,14,1.5,ss,.8),
+    smirk:    ()=>pa('M17 28 Q21 31 27 27',ss,1.5),
+    pout:     ()=>pa('M17 30 Q22 27 27 30',ss,1.5),
+    surprised:()=>el(22,29,4,3,'#4A1A0A')+el(22,28.5,3.2,2,'#AA3030'),
+  };
+  L.push((M[a.mouth]||M.smile)());
+
+  // Pilosité
+  if(a.facial&&a.facial!=='none'){
+    const B={
+      stubble:    ()=>el(22,28,6,2.5,ss,'opacity="0.25"'),
+      mustache:   ()=>pa('M16 26 Q22 29 28 26',darken(hc),1.5),
+      short_beard:()=>el(22,29,8,4,'#0A0A0A','opacity="0.45"')+pa('M14 26 Q22 30 30 26','#0A0A0A',1,'none','opacity="0.45"'),
+      long_beard: ()=>re(13,27,18,8,'#0A0A0A',3,'opacity="0.5"')+pa('M14 26 Q22 30 30 26','#0A0A0A',1.2,'none','opacity="0.5"'),
+      goatee:     ()=>el(22,30,4,3,'#0A0A0A','opacity="0.5"')+pa('M17 26 Q22 28 27 26','#0A0A0A',1,'none','opacity="0.45"'),
+    };
+    L.push((B[a.facial]||(() =>''))());
+  }
+
+  // Lunettes
+  if(a.glasses&&a.glasses!=='none'){
+    const GC={round:'#444',rect:'#222',cateye:'#1A1A2A',tinted:'#0A4A60',monocle:'#8A6000'};
+    const gc=GC[a.glasses]||'#444';
+    const G={
+      round:  [`<circle cx="15" cy="20" r="5" fill="none" stroke="${gc}" stroke-width="0.9"/>`,`<circle cx="29" cy="20" r="5" fill="none" stroke="${gc}" stroke-width="0.9"/>`,li(20,20,24,20,gc,.8),li(10,19,9,17,gc,.8),li(34,19,35,17,gc,.8)],
+      rect:   [re(10,17,10,7,'none',1,`stroke="${gc}" stroke-width="0.9"`),re(25,17,10,7,'none',1,`stroke="${gc}" stroke-width="0.9"`),li(20,20.5,25,20.5,gc,.8),li(10,20,9,18,gc,.8),li(35,20,36,18,gc,.8)],
+      cateye: [`<path d="M9 22 Q11 15 20 17 Q20 23 15 24 Z" fill="${gc}" opacity="0.85"/>`,`<path d="M24 17 Q33 15 35 22 L30 24 Q24 23 24 17 Z" fill="${gc}" opacity="0.85"/>`,li(20,19,24,19,gc,.8),li(9,21,8,18,gc,.8),li(35,21,36,18,gc,.8)],
+      tinted: [re(10,17,10,7,'#1A6A80',1,'opacity="0.65"'),re(25,17,10,7,'#1A6A80',1,'opacity="0.65"'),re(10,17,10,7,'none',1,`stroke="${gc}" stroke-width="0.8"`),re(25,17,10,7,'none',1,`stroke="${gc}" stroke-width="0.8"`),li(20,20.5,25,20.5,gc,.8)],
+      monocle:[`<circle cx="29" cy="20" r="5.5" fill="rgba(180,140,0,0.1)" stroke="${gc}" stroke-width="0.9"/>`,li(29,25.5,29,29,gc,.7),li(34,18,36,16,gc,.7)],
+    };
+    (G[a.glasses]||[]).forEach(l=>L.push(l));
+  }
+
+  // Boucles d'oreilles
+  if(a.earrings&&a.earrings!=='none'){
+    const E={
+      gold_studs: [el(9,20,1.8,1.8,'#FFD700'),el(35,20,1.8,1.8,'#FFD700')],
+      black_studs:[el(9,20,1.8,1.8,'#1A1A1A'),el(35,20,1.8,1.8,'#1A1A1A'),el(9,20,.8,.8,'#444'),el(35,20,.8,.8,'#444')],
+      hoops:      [`<circle cx="9" cy="20" r="2.8" fill="none" stroke="#FFD700" stroke-width="0.9"/>`,`<circle cx="35" cy="20" r="2.8" fill="none" stroke="#FFD700" stroke-width="0.9"/>`],
+      drops:      [li(9,19,9,24,'#C0C0C0',.8),el(9,25,1.5,1.5,'#C0C0C0'),li(35,19,35,24,'#C0C0C0',.8),el(35,25,1.5,1.5,'#C0C0C0')],
+      chandelier: [li(9,19,9,22,'#FFD700',.8),el(9,23,2,1.2,'#FFD700'),el(9,25.5,1.5,1,'#EF9F27'),el(9,27.5,1.2,1.2,'#FFD700'),li(35,19,35,22,'#FFD700',.8),el(35,23,2,1.2,'#FFD700'),el(35,25.5,1.5,1,'#EF9F27'),el(35,27.5,1.2,1.2,'#FFD700')],
+    };
+    (E[a.earrings]||[]).forEach(l=>L.push(l));
+  }
+
+  const svgH=Math.round(size*(H/W));
+  return `<svg width="${size}" height="${svgH}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;display:block;">${L.join('')}</svg>`;
+}
+
+// ── Rendu de la prévisualisation ──
+function renderPreview() {
+  const bgObj = CATALOG.bgColor.opts.find(o=>o.id===av.bgColor)||CATALOG.bgColor.opts[0];
+  const outfitObj = CATALOG.outfit.opts.find(o=>o.id===av.outfit)||CATALOG.outfit.opts[0];
+
+  document.getElementById('avatarSVG').innerHTML = buildSVG(av, 130);
+  document.getElementById('cardTop').style.background = `linear-gradient(170deg, ${bgObj.from} 30%, ${bgObj.to} 100%)`;
+  document.getElementById('cardName').textContent = profile.displayName;
+
+  const lvl = profile.level || 1;
+  document.getElementById('cardStars').textContent = '★'.repeat(Math.min(lvl,5))+'☆'.repeat(Math.max(0,5-lvl));
+  document.getElementById('cardNet').textContent = `Valeur nette : ${(profile.netWorth||0).toLocaleString('fr-CA')} $`;
+  document.getElementById('cardLevel').textContent = `Niv. ${lvl}`;
+
+  const badge = document.getElementById('influenceBadge');
+  if(outfitObj.influence){
+    badge.style.display='block';
+    badge.textContent=`+${outfitObj.influence} ✦ Influence`;
+  } else {
+    badge.style.display='none';
+  }
+
+  // Barres de stats
+  const infBonus = outfitObj.influence||0;
+  const s = {...stats, influence: Math.min(10, stats.influence + infBonus)};
+  const pairs = [['sante',s.sante],['conn',s.connaissances],['hab',s.habiletes],['org',s.organisation],['inf',s.influence]];
+  pairs.forEach(([key,val])=>{
+    const bar = document.getElementById('bar-'+key);
+    const valEl = document.getElementById('val-'+key);
+    if(bar) bar.style.width = (val*10)+'%';
+    if(valEl) valEl.textContent = val;
+  });
+}
+
+// ── Construction du panneau d'options ──
+function buildOptionsPanel() {
+  const panel = document.getElementById('optionsPanel');
+  panel.innerHTML = '';
+
+  const ORDER = ['bgColor','skinTone','faceShape','eyeShape','eyeColor','hairStyle','hairColor','mouth','facial','glasses','earrings','outfit'];
+
+  ORDER.forEach(key => {
+    const cat = CATALOG[key];
+    if(!cat) return;
+
+    const section = document.createElement('div');
+    section.className = 'section';
+
+    const anyLocked = cat.opts.some(o=>o.unlock);
+
+    section.innerHTML = `
+      <div class="section-header">
+        ${cat.label}
+        ${anyLocked ? '<span class="lock-tag">certains en boutique</span>' : ''}
+      </div>
+      <div class="options-grid" id="grid-${key}"></div>
+    `;
+    panel.appendChild(section);
+
+    const grid = section.querySelector(`#grid-${key}`);
+    cat.opts.forEach(opt => {
+      const btn = document.createElement('button');
+      const locked = opt.unlock && !isUnlocked(opt.unlock);
+
+      btn.className = 'opt-btn' +
+        (av[key]===opt.id ? ' active' : '') +
+        (locked ? ' locked' : '') +
+        (opt.unlock==='boutique' ? ' boutique-item' : '');
+      btn.disabled = locked;
+
+      let inner = '';
+      if(opt.color) inner += `<span class="color-dot" style="background:${opt.color}"></span>`;
+      inner += `<span>${opt.label}</span>`;
+      if(locked) inner += `<span class="lock-icon">🔒</span>`;
+      else if(opt.unlock==='boutique') inner += `<span style="font-size:9px;color:#AA8800;margin-left:2px;">★</span>`;
+      btn.innerHTML = inner;
+
+      if(!locked) {
+        btn.onclick = () => {
+          av[key] = opt.id;
+          // Mettre à jour visuellement tous les boutons du groupe
+          grid.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          renderPreview();
+        };
+      }
+      grid.appendChild(btn);
+    });
+  });
+}
+
+function isUnlocked(unlock) {
+  if(!unlock) return true;
+  if(unlock==='boutique') return false; // En prod: vérifier le solde
+  if(unlock==='age_18')   return progress.ageUnlocked18;
+  if(unlock==='ch5')      return progress.ch5Completed;
+  if(unlock==='rare')     return false;
+  return false;
+}
+
+// ── Sauvegarde (Firebase en prod) ──
+window.saveAvatar = async function() {
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true;
+  btn.textContent = 'Sauvegarde…';
+
+  // En production :
+  // const { doc, setDoc } = await import("firebase/firestore");
+  // await setDoc(doc(db, 'users', currentUser.uid), { avatar: av }, { merge: true });
+
+  await new Promise(r=>setTimeout(r,600)); // Simulé
+
+  btn.disabled = false;
+  btn.textContent = 'Sauvegarder';
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 2500);
+};
+
+// ── Init ──
+buildOptionsPanel();
+renderPreview();
+</script>
+</body>
+</html>
