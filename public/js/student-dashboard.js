@@ -14,18 +14,116 @@ const MODULE_DEFS = [
   { id: 'ch5', num: 5, title: 'L\'épargne et l\'investissement', subtitle: 'CELI, actions, FNB, intérêt composé', icon: '📈' },
 ];
 
+// ── Avatar : chargement + écoute temps réel ─────────────────────────────────
+// Quand l élève modifie son personnage dans character-editor.html et sauvegarde,
+// le dashboard se met à jour automatiquement sans rechargement de page.
+function loadAvatarRealtime(uid, initialData) {
+  // 1. Affichage immédiat avec les données déjà chargées
+  applyAvatarData(initialData);
+
+  // 2. Écoute Firestore en temps réel (onSnapshot)
+  // Si character-editor.html sauvegarde un nouvel avatar → mise à jour instantanée
+  try {
+    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js')
+      .then(({ onSnapshot, doc: fsDoc }) => {
+        onSnapshot(fsDoc(db, 'users', uid), (snap) => {
+          if (snap.exists()) {
+            applyAvatarData(snap.data());
+          }
+        });
+      });
+  } catch(e) {
+    console.warn('[Avatar] onSnapshot non disponible:', e);
+  }
+}
+
+function applyAvatarData(userData) {
+  const avatarData  = userData.avatar       || {};
+  const rpgLevel    = userData.rpgLevel     || 1;
+  const rpgXP       = userData.rpgXP       || 0;
+  const rpgAge      = userData.rpgAge      || 17;
+  const rpgWeek     = userData.rpgWeek     || 1;
+  const rpgStats    = userData.rpgStats    || { sante:5, connaissances:5, habiletes:5, organisation:5, influence:5 };
+  const celiBalance = userData.celiBalance || 0;
+  const ch5Done     = userData.ch5Completed || false;
+  const rankDelta   = userData.rankDelta   ?? null;
+
+  // ── Fond de carte avatar selon bgColor ──
+  const card = document.getElementById('avatarCardMini');
+  if (card && avatarData.bgColor) card.setAttribute('data-bg', avatarData.bgColor);
+
+  // ── Étoiles et niveau ──
+  const stars = '★'.repeat(Math.min(rpgLevel, 5)) + '☆'.repeat(Math.max(0, 5 - rpgLevel));
+  setText('avatarStars', stars);
+  setText('avatarLevel', 'Niv. ' + rpgLevel);
+
+  // ── Barre XP ──
+  const XP_PER_LVL = 1000;
+  const xpInLvl    = rpgXP % XP_PER_LVL;
+  const xpPct      = Math.round((xpInLvl / XP_PER_LVL) * 100);
+  setText('rpgXpLabel', xpInLvl.toLocaleString('fr-CA') + ' / ' + XP_PER_LVL.toLocaleString('fr-CA') + ' XP');
+  setText('rpgXpNext', '+' + (XP_PER_LVL - xpInLvl).toLocaleString('fr-CA') + ' XP pour niveau ' + (rpgLevel + 1));
+  const xpFill = document.getElementById('rpgXpFill');
+  if (xpFill) xpFill.style.width = xpPct + '%';
+
+  // ── Badge âge ──
+  setText('rpgAgeBadge', 'Étudiant · ' + rpgAge + ' ans');
+
+  // ── Valeur nette ──
+  const netFormatted = Math.abs(celiBalance).toLocaleString('fr-CA', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  setText('statNetWorth', (celiBalance < 0 ? '−' : '') + netFormatted + ' $');
+  setText('statNetWorthSub', ch5Done ? 'CELI · Débloqué ✓' : 'Compte épargne ordinaire');
+  const netEl = document.querySelector('#cardNetWorth .rpg-stat-value');
+  if (netEl) netEl.style.color = celiBalance >= 0 ? '#1D9E75' : '#DC2626';
+
+  // ── Stats RPG ──
+  const vals = Object.values(rpgStats);
+  const avg  = vals.length ? vals.reduce((a,b)=>a+b,0) / vals.length : 5;
+  setText('statRPGAvg', avg.toFixed(1).replace('.', ','));
+  const STAT_NAMES = { sante:'Santé', connaissances:'Connaissances', habiletes:'Habiletés', organisation:'Organisation', influence:'Influence' };
+  const topEntry = Object.entries(rpgStats).sort((a,b) => b[1]-a[1])[0];
+  if (topEntry) setText('statRPGSub', 'Meilleure stat : ' + (STAT_NAMES[topEntry[0]]||topEntry[0]) + ' (' + topEntry[1] + '/10)');
+
+  // ── SVG Avatar — généré dynamiquement si character.js disponible ──
+  generateAndInjectAvatar(avatarData);
+}
+
+// Génère le SVG de l avatar et l injecte dans la mini carte
+async function generateAndInjectAvatar(avatarData) {
+  if (!avatarData || Object.keys(avatarData).length === 0) return;
+  try {
+    const mod = await import('../js/character.js');
+    const svg = mod.generateAvatarSVG(avatarData, 68);
+    const cont = document.getElementById('avatarSVGMini');
+    if (cont) cont.innerHTML = svg;
+  } catch(e) {
+    // character.js absent — garde le SVG de fallback statique
+  }
+}
+
+function setText(id, txt) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = txt;
+}
+
 async function init() {
   try {
     const { user, data: userData } = await requireAuth('student');
 
     // Topbar
     initTopbar(userData);
-    document.getElementById('welcome-name').textContent =
-      (userData.displayName || userData.email).split(' ')[0];
 
-    // Stats de base
-    document.getElementById('stat-balance').textContent =
-      formatCAD(userData.celiBalance || 0);
+    // welcome-name — écrit le prénom (le script RPG gère le reste du header)
+    const firstName = (userData.displayName || userData.email).split(' ')[0];
+    const welcomeEl = document.getElementById('welcome-name');
+    if (welcomeEl) welcomeEl.textContent = firstName;
+
+    // Stats de base (garde compatibilité topbar)
+    const balanceEl = document.getElementById('stat-balance');
+    if (balanceEl) balanceEl.textContent = formatCAD(userData.celiBalance || 0);
+
+    // Charger l avatar depuis Firestore et écouter les changements en temps réel
+    loadAvatarRealtime(user.uid, userData);
 
     // Charger la progression des modules
     const progressSnap = await getDocs(
