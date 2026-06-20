@@ -568,3 +568,105 @@ async function showQuizResults(q, weekNum, choiceIndex, userId, alreadyAnswered)
   resultDiv.classList.add('visible');
   if (choicesDiv) choicesDiv.style.display = 'none';
 }
+// ═══════════════════════════════════════════════════════════════
+// BLOC RPG — Avatar temps réel
+// Entièrement indépendant du code existant ci-dessus.
+// Utilise onSnapshot pour mettre à jour l'avatar dès que
+// character-editor.html sauvegarde dans Firestore.
+// ═══════════════════════════════════════════════════════════════
+(async function initRPGAvatar() {
+  try {
+    // Attendre que l'utilisateur soit authentifié (auth déjà importé en haut)
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) return;
+
+      // Charger character.js pour générer le SVG
+      let generateAvatarSVG = null;
+      try {
+        const mod = await import('../js/character.js');
+        generateAvatarSVG = mod.generateAvatarSVG || null;
+      } catch(e) {
+        console.warn('[RPG Avatar] character.js non chargé:', e.message);
+      }
+
+      // Écouter le document utilisateur en temps réel
+      // onSnapshot se déclenche immédiatement au chargement,
+      // puis à chaque modification (ex: sauvegarde depuis character-editor)
+      onSnapshot(doc(db, 'users', user.uid), (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        applyRPGData(data, generateAvatarSVG);
+      });
+    });
+  } catch(e) {
+    console.warn('[RPG Avatar] Erreur init:', e);
+  }
+})();
+
+function applyRPGData(data, generateAvatarSVG) {
+  const avatar     = data.avatar       || {};
+  const rpgLevel   = data.rpgLevel     || 1;
+  const rpgXP      = data.rpgXP        || 0;
+  const rpgAge     = data.rpgAge       || 17;
+  const rpgWeek    = data.rpgWeek      || 1;
+  const rpgStats   = data.rpgStats     || { sante:5, connaissances:5, habiletes:5, organisation:5, influence:5 };
+  const balance    = data.celiBalance  || 0;
+  const ch5Done    = data.ch5Completed || false;
+  const rankDelta  = data.rankDelta    ?? null;
+
+  // ── Mini carte avatar : fond coloré ──
+  const card = document.getElementById('avatarCardMini');
+  if (card && avatar.bgColor) card.setAttribute('data-bg', avatar.bgColor);
+
+  // ── Étoiles + niveau ──
+  rpgSet('avatarStars', '★'.repeat(Math.min(rpgLevel,5)) + '☆'.repeat(Math.max(0,5-rpgLevel)));
+  rpgSet('avatarLevel', 'Niv. ' + rpgLevel);
+
+  // ── Badge âge ──
+  rpgSet('rpgAgeBadge', 'Étudiant · ' + rpgAge + ' ans');
+
+  // ── Sous-titre semaine ──
+  const chapLabel = 'Ch. ' + Math.min(rpgLevel, 5) + ' en cours';
+  rpgSet('rpgSubtitle', 'Semaine ' + rpgWeek + ' sur 32 · ' + chapLabel);
+
+  // ── Barre XP ──
+  const XP_PER = 1000;
+  const xpIn   = rpgXP % XP_PER;
+  const xpPct  = Math.round(xpIn / XP_PER * 100);
+  rpgSet('rpgXpLabel', xpIn.toLocaleString('fr-CA') + ' / ' + XP_PER.toLocaleString('fr-CA') + ' XP');
+  rpgSet('rpgXpNext',  '+' + (XP_PER - xpIn).toLocaleString('fr-CA') + ' XP pour niveau ' + (rpgLevel+1));
+  const xpBar = document.getElementById('rpgXpFill');
+  if (xpBar) xpBar.style.width = xpPct + '%';
+
+  // ── Valeur nette ──
+  const net = Math.abs(balance).toLocaleString('fr-CA', {minimumFractionDigits:2, maximumFractionDigits:2});
+  rpgSet('statNetWorth', (balance < 0 ? '−' : '') + net + ' $');
+  rpgSet('statNetWorthSub', ch5Done ? 'CELI · Débloqué ✓' : 'Compte épargne ordinaire');
+  const netEl = document.querySelector('#cardNetWorth .rpg-stat-value');
+  if (netEl) netEl.style.color = balance >= 0 ? '#1D9E75' : '#DC2626';
+
+  // ── Stats RPG ──
+  const vals = Object.values(rpgStats);
+  const avg  = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 5;
+  rpgSet('statRPGAvg', avg.toFixed(1).replace('.',','));
+  const NAMES = {sante:'Santé',connaissances:'Connaissances',habiletes:'Habiletés',organisation:'Organisation',influence:'Influence'};
+  const top = Object.entries(rpgStats).sort((a,b)=>b[1]-a[1])[0];
+  if (top) rpgSet('statRPGSub', 'Meilleure : ' + (NAMES[top[0]]||top[0]) + ' (' + top[1] + '/10)');
+
+  // ── SVG Avatar ──
+  if (generateAvatarSVG && Object.keys(avatar).length > 0) {
+    try {
+      const svg  = generateAvatarSVG(avatar, 68);
+      const cont = document.getElementById('avatarSVGMini');
+      if (cont) cont.innerHTML = svg;
+    } catch(e) {
+      console.warn('[RPG Avatar] Erreur génération SVG:', e.message);
+    }
+  }
+}
+
+// Utilitaire setText sûr (ne plante pas si l'élément n'existe pas)
+function rpgSet(id, txt) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = txt;
+}
