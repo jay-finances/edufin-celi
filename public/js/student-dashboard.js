@@ -90,7 +90,7 @@ async function generateAndInjectAvatar(avatarData) {
   const cont = document.getElementById('avatarSVGMini');
   if (!cont) return;
   try {
-    const mod = await import('../js/character.js');
+    const mod = await import('./character.js');
     if (mod && mod.generateAvatarSVG) {
       const svg = mod.generateAvatarSVG(avatarData, 68);
       cont.innerHTML = svg;
@@ -583,7 +583,7 @@ async function showQuizResults(q, weekNum, choiceIndex, userId, alreadyAnswered)
       // Charger character.js pour générer le SVG
       let generateAvatarSVG = null;
       try {
-        const mod = await import('../js/character.js');
+        const mod = await import('./character.js');
         generateAvatarSVG = mod.generateAvatarSVG || null;
       } catch(e) {
         console.warn('[RPG Avatar] character.js non chargé:', e.message);
@@ -658,10 +658,17 @@ function applyRPGData(data, generateAvatarSVG) {
     try {
       const svg  = generateAvatarSVG(avatar, 68);
       const cont = document.getElementById('avatarSVGMini');
-      if (cont) cont.innerHTML = svg;
+      if (cont) {
+        cont.innerHTML = svg;
+        console.log('[RPG Avatar] SVG injecté, taille:', svg.length);
+      } else {
+        console.warn('[RPG Avatar] avatarSVGMini introuvable dans le DOM');
+      }
     } catch(e) {
       console.warn('[RPG Avatar] Erreur génération SVG:', e.message);
     }
+  } else {
+    console.log('[RPG Avatar] generateAvatarSVG:', !!generateAvatarSVG, '| avatar keys:', Object.keys(avatar).length);
   }
 }
 
