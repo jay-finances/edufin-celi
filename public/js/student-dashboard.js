@@ -154,10 +154,18 @@ async function init() {
       }
     });
 
-    document.getElementById('stat-modules').textContent = `${completed} / 5`;
-    document.getElementById('stat-quizzes').textContent = completed;
-    document.getElementById('stat-avg-score').textContent =
-      scoreCount > 0 ? `${Math.round(totalScore / scoreCount)}%` : '—';
+    // Ces IDs existent dans l ancien HTML — protégés si absent du nouveau HTML
+    const elMod = document.getElementById('stat-modules');
+    if (elMod) elMod.textContent = `${completed} / 5`;
+    const elQuiz = document.getElementById('stat-quizzes');
+    if (elQuiz) elQuiz.textContent = completed;
+    const elAvg = document.getElementById('stat-avg-score');
+    if (elAvg) elAvg.textContent = scoreCount > 0 ? `${Math.round(totalScore / scoreCount)}%` : '—';
+
+    // Mettre à jour aussi les nouveaux IDs RPG
+    rpgSet('statChapCurrent', completed);
+    rpgSet('statQuizCount', completed);
+    rpgSet('statQuizAvg', scoreCount > 0 ? Math.round(totalScore / scoreCount) + ' %' : '—');
 
     // Déverrouiller la navigation marché si ch5 complété
     if (marketUnlocked) {
