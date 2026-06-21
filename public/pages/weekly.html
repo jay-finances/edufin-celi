@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ma semaine — ÉduFin RPG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+  /* ═══════════════════════════════════════════════
+     LAYOUT GÉNÉRAL
+  ═══════════════════════════════════════════════ */
+  body { background: var(--surface, #F8F9FB); min-height: 100vh; }
+
+  .weekly-layout {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 16px 80px;
+  }
+
+  /* ─── Header ─── */
+  .weekly-header {
+    background: var(--card-bg, #fff);
+    border-bottom: 1px solid var(--border, #E5E7EB);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    gap: 12px;
+  }
+  .weekly-header-left { display: flex; align-items: center; gap: 14px; }
+  .btn-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,0,0,0.04);
+    border: 1px solid var(--border, #E5E7EB);
+    color: var(--slate, #6B7280);
+    border-radius: 8px; padding: 7px 14px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    text-decoration: none; transition: background 0.15s;
+  }
+  .btn-back:hover { background: rgba(0,0,0,0.08); }
+  .header-logo { font-size: 17px; font-weight: 600; color: var(--text, #111827); }
+  .header-logo span { color: #378ADD; }
+  .header-week-badge {
+    font-size: 12px; font-weight: 500;
+    background: #E6F1FB; color: #185FA5;
+    border-radius: 99px; padding: 3px 12px;
+  }
+  .btn-submit {
+    background: #378ADD; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 9px 20px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .btn-submit:hover { opacity: 0.88; }
+  .btn-submit:disabled { opacity: 0.4; cursor: default; }
+
+  /* ─── Sous-header — infos semaine ─── */
+  .week-summary {
+    background: #1A2035;
+    color: #E8EAF0;
+    padding: 20px 24px;
+    border-radius: 0 0 16px 16px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .ws-item { }
+  .ws-label { font-size: 10px; color: #8A94B0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .ws-value { font-size: 20px; font-weight: 600; color: #fff; }
+  .ws-sub   { font-size: 11px; color: #8A94B0; margin-top: 2px; }
+
+  /* ─── Sections ─── */
+  .section-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border, #E5E7EB);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .section-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border, #E5E7EB);
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface, #F9FAFB);
+  }
+  .section-icon { font-size: 20px; }
+  .section-title { font-size: 15px; font-weight: 600; color: var(--text, #111827); }
+  .section-sub   { font-size: 12px; color: var(--slate, #6B7280); margin-top: 1px; }
+  .section-body  { padding: 16px 18px; }
+
+  /* ═══════════════════════════════════════════════
+     SECTION EMPLOI
+  ═══════════════════════════════════════════════ */
+  .job-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .job-card {
+    border: 1.5px solid var(--border, #E5E7EB);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    position: relative;
+  }
+  .job-card:hover { border-color: #378ADD; transform: translateY(-1px); }
+  .job-card.selected {
+    border-color: #378ADD;
+    background: #F0F7FF;
+  }
+  .job-card.locked {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .job-card.current-job {
+    border-color: #1D9E75;
+    background: #F0FBF6;
+  }
+  .job-emoji { font-size: 22px; margin-bottom: 6px; }
+  .job-name  { font-size: 13px; font-weight: 600; color: var(--text, #111827); margin-bottom: 4px; }
+  .job-salary { font-size: 16px; font-weight: 700; color: #1D9E75; margin-bottom: 6px; }
+  .job-energy-tag {
+    display: inline-block; font-size: 10px; padding: 2px 8px;
+    border-radius: 99px; font-weight: 500; margin-bottom: 6px;
+  }
+  .job-requirements { font-size: 11px; color: var(--slate, #6B7280); }
+  .job-req-chip {
+    display: inline-block; font-size: 10px; padding: 1px 6px;
+    border-radius: 4px; background: var(--surface, #F3F4F6);
+    color: var(--slate, #6B7280); margin: 1px;
+  }
+  .job-req-chip.unmet { background: #FCEBEB; color: #A32D2D; }
+  .job-lock-notice {
+    font-size: 11px; color: #854F0B;
+    background: #FAEEDA; border-radius: 8px;
+    padding: 8px 12px; margin-top: 10px;
+    display: none;
+  }
+  .job-lock-notice.visible { display: block; }
+
+  /* ═══════════════════════════════════════════════
+     BUDGET TEMPS
+  ═══════════════════════════════════════════════ */
+  .time-budget-bar {
+    height: 28px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    margin-bottom: 12px;
+    border: 1px solid rgba(0,0,0,0.07);
+  }
+  .tb-segment {
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; color: #fff;
+    transition: width 0.4s ease;
+    overflow: hidden;
+  }
+  .tb-school  { background: #378ADD; }
+  .tb-sleep   { background: #7F77DD; }
+  .tb-work    { background: #EF9F27; }
+  .tb-free    { background: #1D9E75; }
+  .tb-used    { background: #E5E7EB; }
+
+  .time-legend {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
+  }
+  .tl-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--slate, #6B7280); }
+  .tl-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  .free-units-display {
+    background: #F0FBF6;
+    border: 1px solid #9FE1CB;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .fud-label { font-size: 13px; color: #0F6E56; font-weight: 500; }
+  .fud-value { font-size: 22px; font-weight: 700; color: #0F6E56; }
+  .fud-sub   { font-size: 11px; color: #6B7280; }
+
+  /* Activités */
+  .activities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+  }
+  .activity-card {
+    border: 1.5px solid var(--border, #E5E7EB);
+    border-radius: 10px; padding: 11px 13px;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  }
+  .activity-card:hover { border-color: #378ADD; }
+  .activity-card.selected { border-color: #1D9E75; background: #F0FBF6; }
+  .activity-card.trap { border-color: #FAEEDA; background: #FFFBF5; }
+  .activity-card.trap.selected { border-color: #EF9F27; background: #FFF8EE; }
+  .activity-card.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+  .ac-emoji { font-size: 18px; margin-bottom: 5px; }
+  .ac-name  { font-size: 12px; font-weight: 600; color: var(--text, #111827); margin-bottom: 3px; }
+  .ac-cost  { font-size: 11px; color: var(--slate, #6B7280); }
+  .ac-cost span { font-weight: 500; color: #378ADD; }
+  .ac-effect { font-size: 11px; color: var(--slate, #6B7280); margin-top: 4px; line-height: 1.4; }
+  .ac-trap-label {
+    font-size: 9px; font-weight: 600; color: #854F0B;
+    background: #FAEEDA; border-radius: 4px;
+    padding: 1px 5px; margin-top: 4px; display: inline-block;
+  }
+
+  /* ═══════════════════════════════════════════════
+     ÉVÉNEMENT HEBDOMADAIRE
+  ═══════════════════════════════════════════════ */
+  .event-card {
+    border: 1px solid var(--border, #E5E7EB);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .event-header {
+    padding: 16px 18px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .event-emoji-big { font-size: 36px; flex-shrink: 0; line-height: 1; }
+  .event-type-tag {
+    font-size: 10px; font-weight: 600; padding: 2px 8px;
+    border-radius: 99px; margin-bottom: 6px; display: inline-block;
+  }
+  .event-title-text { font-size: 16px; font-weight: 600; color: var(--text, #111827); line-height: 1.3; }
+  .event-prob { font-size: 11px; color: var(--slate, #6B7280); margin-top: 6px; }
+
+  .event-choices { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 8px; }
+  .event-choice {
+    border: 1.5px solid var(--border, #E5E7EB);
+    border-radius: 10px; padding: 13px 16px;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .event-choice:hover { border-color: #378ADD; background: #F8FBFF; }
+  .event-choice.selected { border-color: #378ADD; background: #F0F7FF; }
+  .event-choice.done { pointer-events: none; opacity: 0.7; }
+  .ec-letter {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--surface, #F3F4F6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; flex-shrink: 0;
+    color: var(--slate, #6B7280);
+  }
+  .event-choice.selected .ec-letter { background: #378ADD; color: #fff; }
+  .ec-body { flex: 1; }
+  .ec-label  { font-size: 13px; font-weight: 500; color: var(--text, #111827); margin-bottom: 4px; }
+  .ec-result { font-size: 12px; color: var(--slate, #6B7280); }
+  .ec-result .pos { color: #1D9E75; font-weight: 500; }
+  .ec-result .neg { color: #DC2626; font-weight: 500; }
+  .ec-emoji  { font-size: 20px; flex-shrink: 0; }
+
+  .event-done-banner {
+    background: #EAF3DE; border-radius: 10px;
+    padding: 12px 16px; text-align: center;
+    font-size: 13px; color: #3B6D11; font-weight: 500;
+    display: none;
+  }
+  .event-done-banner.visible { display: block; }
+
+  /* ═══════════════════════════════════════════════
+     RÉSUMÉ DE FIN DE SEMAINE (modal)
+  ═══════════════════════════════════════════════ */
+  .results-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+    display: none;
+  }
+  .results-overlay.visible { display: flex; }
+
+  .results-modal {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%; max-width: 480px;
+    overflow: hidden;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .rm-header {
+    background: #1A2035;
+    padding: 24px;
+    text-align: center;
+    color: #fff;
+  }
+  .rm-week-num { font-size: 12px; color: #8A94B0; margin-bottom: 6px; }
+  .rm-title    { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .rm-subtitle { font-size: 13px; color: #8A94B0; }
+
+  .rm-body { padding: 20px 24px; }
+
+  .rm-balance-delta {
+    text-align: center; margin-bottom: 20px;
+    padding: 16px; background: #F0FBF6;
+    border-radius: 12px; border: 1px solid #9FE1CB;
+  }
+  .rm-delta-label { font-size: 12px; color: #0F6E56; margin-bottom: 4px; }
+  .rm-delta-amount { font-size: 32px; font-weight: 700; color: #1D9E75; }
+  .rm-delta-amount.negative { color: #DC2626; }
+  .rm-new-balance { font-size: 13px; color: #6B7280; margin-top: 6px; }
+
+  .rm-messages { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .rm-msg {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 12px; border-radius: 8px;
+    background: var(--surface, #F9FAFB);
+    font-size: 13px; color: var(--text, #111827); line-height: 1.4;
+  }
+  .rm-msg.income  { background: #EAF3DE; color: #3B6D11; }
+  .rm-msg.expense { background: #FCEBEB; color: #A32D2D; }
+  .rm-msg.levelup { background: #FAEEDA; color: #854F0B; }
+  .rm-msg.statup  { background: #EEEDFE; color: #534AB7; }
+  .rm-msg.event   { background: #E6F1FB; color: #185FA5; }
+  .rm-msg.bonus   { background: #EEEDFE; color: #534AB7; }
+
+  .rm-xp-bar-wrap { margin-bottom: 20px; }
+  .rm-xp-label { display: flex; justify-content: space-between; font-size: 12px; color: #6B7280; margin-bottom: 6px; }
+  .rm-xp-track { height: 8px; background: #F3F4F6; border-radius: 99px; overflow: hidden; }
+  .rm-xp-fill  { height: 100%; background: #378ADD; border-radius: 99px; transition: width 0.8s ease; }
+
+  .btn-next-week {
+    width: 100%; background: #378ADD; color: #fff;
+    border: none; border-radius: 10px; padding: 14px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-next-week:hover { opacity: 0.88; }
+
+  /* ─── Levelup special ─── */
+  .levelup-banner {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border-radius: 10px; padding: 14px;
+    text-align: center; margin-bottom: 14px;
+    display: none;
+  }
+  .levelup-banner.visible { display: block; }
+  .levelup-banner .lu-title { font-size: 18px; font-weight: 700; color: #5A2D00; }
+  .levelup-banner .lu-sub   { font-size: 13px; color: #7A4400; margin-top: 4px; }
+
+  /* ─── Loading ─── */
+  .loading-screen {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 60vh; gap: 16px;
+    color: var(--slate, #6B7280); font-size: 14px;
+  }
+  .loading-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #E5E7EB;
+    border-top-color: #378ADD;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 640px) {
+    .week-summary { grid-template-columns: 1fr 1fr; }
+    .job-grid     { grid-template-columns: 1fr 1fr; }
+    .activities-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 400px) {
+    .week-summary { grid-template-columns: 1fr; }
+    .job-grid     { grid-template-columns: 1fr; }
+  }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="weekly-header">
+  <div class="weekly-header-left">
+    <a href="student-dashboard.html" class="btn-back">← Tableau de bord</a>
+    <div class="header-logo">Édu<span>Fin</span> RPG</div>
+    <div class="header-week-badge" id="headerWeekBadge">Semaine —</div>
+  </div>
+  <button class="btn-submit" id="btnSubmit" disabled>
+    Terminer ma semaine →
+  </button>
+</header>
+
+<!-- ── Contenu principal ── -->
+<div class="weekly-layout">
+
+  <!-- Écran de chargement -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-spinner"></div>
+    <span>Chargement de ta semaine…</span>
+  </div>
+
+  <!-- Contenu (caché pendant le chargement) -->
+  <div id="weeklyContent" style="display:none;">
+
+    <!-- Résumé de la semaine -->
+    <div class="week-summary">
+      <div class="ws-item">
+        <div class="ws-label">Solde actuel</div>
+        <div class="ws-value" id="wsSolde">0,00 $</div>
+        <div class="ws-sub" id="wsCompte">Compte épargne</div>
+      </div>
+      <div class="ws-item">
+        <div class="ws-label">Emploi actuel</div>
+        <div class="ws-value" id="wsEmploi">—</div>
+        <div class="ws-sub" id="wsEmploiSub">—</div>
+      </div>
+      <div class="ws-item">
+        <div class="ws-label">Niveau RPG</div>
+        <div class="ws-value" id="wsNiveau">Niv. 1</div>
+        <div class="ws-sub" id="wsXP">0 / 1 000 XP</div>
+      </div>
+      <div class="ws-item">
+        <div class="ws-label">Temps libre</div>
+        <div class="ws-value" id="wsTemps">— u.</div>
+        <div class="ws-sub">unités disponibles</div>
+      </div>
+    </div>
+
+    <!-- Section 1 : Emploi -->
+    <div class="section-card" id="sectionEmploi">
+      <div class="section-header">
+        <span class="section-icon">💼</span>
+        <div>
+          <div class="section-title">Mon emploi cette semaine</div>
+          <div class="section-sub" id="jobSectionSub">Choisis ton emploi pour la semaine</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="job-lock-notice" id="jobLockNotice">
+          🔒 Ton contrat est en cours — tu pourras changer d'emploi dans <strong id="weeksUntilChangeable">—</strong> semaine(s).
+        </div>
+        <div class="job-grid" id="jobGrid">
+          <!-- Généré par JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2 : Budget temps -->
+    <div class="section-card" id="sectionTemps">
+      <div class="section-header">
+        <span class="section-icon">⏱️</span>
+        <div>
+          <div class="section-title">Budget temps — cette semaine</div>
+          <div class="section-sub">100 unités à répartir entre école, sommeil, travail et temps libre</div>
+        </div>
+      </div>
+      <div class="section-body">
+
+        <!-- Barre visuelle -->
+        <div class="time-budget-bar" id="timeBudgetBar">
+          <div class="tb-segment tb-school"  id="tbSchool"  style="width:30%;">École</div>
+          <div class="tb-segment tb-sleep"   id="tbSleep"   style="width:18%;">Sommeil</div>
+          <div class="tb-segment tb-work"    id="tbWork"    style="width:12%;">Travail</div>
+          <div class="tb-segment tb-free"    id="tbFree"    style="width:35%;">Libre</div>
+          <div class="tb-segment tb-used"    id="tbUsed"    style="width:5%;"></div>
+        </div>
+
+        <div class="time-legend">
+          <div class="tl-item"><div class="tl-dot" style="background:#378ADD;"></div>École (30 u.)</div>
+          <div class="tl-item"><div class="tl-dot" style="background:#7F77DD;"></div>Sommeil (<span id="legendSleep">—</span> u.)</div>
+          <div class="tl-item"><div class="tl-dot" style="background:#EF9F27;"></div>Travail (<span id="legendWork">—</span> u.)</div>
+          <div class="tl-item"><div class="tl-dot" style="background:#1D9E75;"></div>Temps libre (<span id="legendFree">—</span> u.)</div>
+        </div>
+
+        <!-- Compteur temps libre -->
+        <div class="free-units-display">
+          <div>
+            <div class="fud-label">Unités libres restantes</div>
+            <div class="fud-sub">Choisis des activités ci-dessous</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="fud-value" id="fudValue">—</div>
+            <div class="fud-sub">unités</div>
+          </div>
+        </div>
+
+        <!-- Activités -->
+        <div class="activities-grid" id="activitiesGrid">
+          <!-- Généré par JS -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Section 3 : Événement de la semaine -->
+    <div class="section-card" id="sectionEvent">
+      <div class="section-header">
+        <span class="section-icon">⚡</span>
+        <div>
+          <div class="section-title">Événement de la semaine</div>
+          <div class="section-sub">Un événement s'est produit — à toi de décider comment y réagir</div>
+        </div>
+      </div>
+      <div class="section-body" id="eventBody">
+        <!-- Généré par JS -->
+      </div>
+    </div>
+
+  </div><!-- fin #weeklyContent -->
+</div><!-- fin .weekly-layout -->
+
+<!-- ── Modal résultats ── -->
+<div class="results-overlay" id="resultsOverlay">
+  <div class="results-modal">
+
+    <div class="rm-header">
+      <div class="rm-week-num" id="rmWeekNum">Semaine — terminée</div>
+      <div class="rm-title">Bilan de ta semaine</div>
+      <div class="rm-subtitle" id="rmSubtitle">Voici ce qui s'est passé</div>
+    </div>
+
+    <div class="rm-body">
+
+      <!-- Level up -->
+      <div class="levelup-banner" id="levelupBanner">
+        <div class="lu-title">🎉 Niveau <span id="luNewLevel">—</span> atteint!</div>
+        <div class="lu-sub">Tu débloques de nouvelles opportunités.</div>
+      </div>
+
+      <!-- Delta argent -->
+      <div class="rm-balance-delta">
+        <div class="rm-delta-label">Variation de ton épargne</div>
+        <div class="rm-delta-amount" id="rmDeltaAmount">+0 $</div>
+        <div class="rm-new-balance">Nouveau solde : <strong id="rmNewBalance">—</strong></div>
+      </div>
+
+      <!-- Barre XP -->
+      <div class="rm-xp-bar-wrap">
+        <div class="rm-xp-label">
+          <span>XP</span>
+          <span id="rmXpLabel">0 / 1 000</span>
+        </div>
+        <div class="rm-xp-track">
+          <div class="rm-xp-fill" id="rmXpFill" style="width:0%;"></div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="rm-messages" id="rmMessages">
+        <!-- Généré par JS -->
+      </div>
+
+      <button class="btn-next-week" id="btnNextWeek">
+        Aller au tableau de bord →
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Scripts ── -->
+<script type="module" src="../js/firebase-init.js"></script>
+<script type="module">
+import {
+  initWeekly, getPlayerData, getWeeklyState, getCurrentJob, getCurrentEvent,
+  getRemainingFreeUnits, canChangeJob, selectJob, toggleActivity,
+  resolveEvent, submitWeek,
+  JOBS, JOBS_BY_ID, FREE_TIME_ACTIVITIES, getAvailableJobs,
+  ENERGY_LABELS, calcSleepUnits, calcFreeTime
+} from '../js/weekly.js';
+
+// ─── INIT ───────────────────────────────────────────────────────────────────
+let playerData, weeklyState;
+
+try {
+  playerData  = await initWeekly();
+  weeklyState = getWeeklyState();
+  renderAll();
+} catch(e) {
+  console.error('[Weekly] Erreur init:', e);
+  document.getElementById('loadingScreen').innerHTML =
+    `<div style="color:#DC2626;">Erreur de chargement. <a href="student-dashboard.html">Retour au tableau de bord</a></div>`;
+}
+
+// ─── RENDU PRINCIPAL ────────────────────────────────────────────────────────
+function renderAll() {
+  document.getElementById('loadingScreen').style.display  = 'none';
+  document.getElementById('weeklyContent').style.display  = 'block';
+
+  renderHeader();
+  renderSummaryBar();
+  renderJobSection();
+  renderTimeSection();
+  renderEventSection();
+  updateSubmitButton();
+}
+
+function renderHeader() {
+  document.getElementById('headerWeekBadge').textContent =
+    `Semaine ${playerData.rpgWeek}`;
+}
+
+function renderSummaryBar() {
+  const bal = playerData.celiBalance.toLocaleString('fr-CA', {
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  });
+  document.getElementById('wsSolde').textContent    = `${bal} $`;
+  document.getElementById('wsCompte').textContent   = playerData.ch5Completed ? 'CELI' : 'Compte épargne';
+  document.getElementById('wsNiveau').textContent   = `Niv. ${playerData.rpgLevel}`;
+  document.getElementById('wsXP').textContent       =
+    `${playerData.rpgXP % 1000} / 1 000 XP`;
+
+  const job = getCurrentJob();
+  document.getElementById('wsEmploi').textContent   = job.emoji + ' ' + job.label;
+  document.getElementById('wsEmploiSub').textContent =
+    job.salaryPerWeek > 0 ? `${job.salaryPerWeek} $/sem.` : 'Temps libre';
+
+  const freeUnits = weeklyState?.freeUnits || 0;
+  document.getElementById('wsTemps').textContent    = `${freeUnits} u.`;
+}
+
+// ─── SECTION EMPLOI ─────────────────────────────────────────────────────────
+function renderJobSection() {
+  const canChange      = canChangeJob();
+  const available      = getAvailableJobs(playerData.rpgStats);
+  const availableIds   = available.map(j => j.id);
+  const currentJobId   = playerData.rpgJob;
+  const minWeeks       = JOBS_BY_ID[currentJobId]?.contractMinWeeks || 3;
+  const weeksLeft      = Math.max(0, minWeeks - playerData.rpgJobWeeks);
+
+  // Notice de verrouillage
+  const lockNotice = document.getElementById('jobLockNotice');
+  const sub        = document.getElementById('jobSectionSub');
+  if (!canChange && currentJobId !== 'none') {
+    lockNotice.classList.add('visible');
+    document.getElementById('weeksUntilChangeable').textContent = weeksLeft;
+    sub.textContent = `Contrat en cours — ${playerData.rpgJobWeeks} sem. sur ${minWeeks} minimum`;
+  } else {
+    sub.textContent = canChange
+      ? 'Tu peux changer d\'emploi cette semaine'
+      : 'Choisis ton emploi de départ';
+  }
+
+  const grid = document.getElementById('jobGrid');
+  grid.innerHTML = '';
+
+  JOBS.forEach(job => {
+    const isAvailable  = availableIds.includes(job.id);
+    const isCurrent    = job.id === currentJobId;
+    const isChangeable = canChange || isCurrent;
+
+    const card = document.createElement('div');
+    card.className = [
+      'job-card',
+      isCurrent ? 'current-job' : '',
+      isCurrent && !canChange ? 'selected' : '',
+      !isAvailable ? 'locked' : '',
+      !isChangeable && !isCurrent ? 'locked' : ''
+    ].filter(Boolean).join(' ');
+
+    // Chips d'exigences
+    const reqChips = Object.entries(job.requirements || {}).map(([stat, min]) => {
+      const met = (playerData.rpgStats[stat] || 0) >= min;
+      const labels = { sante:'Santé', connaissances:'Con.', habiletes:'Hab.', organisation:'Org.', influence:'Inf.' };
+      return `<span class="job-req-chip ${met ? '' : 'unmet'}">${labels[stat] || stat} ${min}+</span>`;
+    }).join('');
+
+    const energyInfo = ENERGY_LABELS[job.energyLevel] || ENERGY_LABELS['faible'];
+
+    card.innerHTML = `
+      <div class="job-emoji">${job.emoji}</div>
+      <div class="job-name">${job.label}${isCurrent ? ' ✓' : ''}</div>
+      <div class="job-salary">${job.salaryPerWeek > 0 ? job.salaryPerWeek + ' $/sem.' : 'Pas de revenu'}</div>
+      <span class="job-energy-tag" style="background:${energyInfo.bg}; color:${energyInfo.color};">
+        Énergie ${energyInfo.label}
+      </span>
+      <div class="job-requirements">${reqChips || '<span style="color:#9CA3AF;font-size:11px;">Aucune exigence</span>'}</div>
+    `;
+
+    if (isAvailable && isChangeable) {
+      card.addEventListener('click', () => onJobSelect(job.id, card));
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+async function onJobSelect(jobId, cardEl) {
+  try {
+    await selectJob(jobId);
+    weeklyState = getWeeklyState();
+    playerData  = getPlayerData();
+
+    // Mise à jour visuelle
+    document.querySelectorAll('.job-card').forEach(c => {
+      c.classList.remove('selected', 'current-job');
+    });
+    cardEl.classList.add('selected', 'current-job');
+
+    // Recalculer le temps et les stats affichées
+    renderTimeSection();
+    renderSummaryBar();
+    updateSubmitButton();
+  } catch(e) {
+    alert(e.message);
+  }
+}
+
+// ─── SECTION TEMPS LIBRE ────────────────────────────────────────────────────
+function renderTimeSection() {
+  const ws  = getWeeklyState();
+  if (!ws) return;
+
+  const sleep = ws.sleepUnits;
+  const work  = ws.workUnits;
+  const free  = ws.freeUnits;
+  const used  = free - getRemainingFreeUnits();
+
+  // Barre visuelle
+  const pSchool = 30;
+  const pSleep  = sleep;
+  const pWork   = work;
+  const pFree   = Math.max(0, free - used);
+  const pUsed   = used;
+
+  document.getElementById('tbSchool').style.width = pSchool + '%';
+  document.getElementById('tbSleep').style.width  = pSleep  + '%';
+  document.getElementById('tbWork').style.width   = pWork   + '%';
+  document.getElementById('tbFree').style.width   = pFree   + '%';
+  document.getElementById('tbUsed').style.width   = pUsed   + '%';
+
+  document.getElementById('legendSleep').textContent = sleep;
+  document.getElementById('legendWork').textContent  = work;
+  document.getElementById('legendFree').textContent  = free;
+  document.getElementById('fudValue').textContent    = getRemainingFreeUnits();
+
+  // Activités
+  renderActivities();
+}
+
+function renderActivities() {
+  const grid = document.getElementById('activitiesGrid');
+  grid.innerHTML = '';
+
+  FREE_TIME_ACTIVITIES.forEach(activity => {
+    const remaining    = getRemainingFreeUnits();
+    const canAfford    = remaining >= activity.cost;
+    const isSelected   = weeklyState.selectedActivities?.includes(activity.id);
+    const meetsReq     = !activity.requiresStat || Object.entries(activity.requiresStat)
+      .every(([s, min]) => (playerData.rpgStats[s] || 0) >= min);
+
+    const card = document.createElement('div');
+    card.className = [
+      'activity-card',
+      activity.isTrap ? 'trap' : '',
+      isSelected ? 'selected' : '',
+      (!canAfford && !isSelected) || !meetsReq ? 'disabled' : ''
+    ].filter(Boolean).join(' ');
+
+    card.innerHTML = `
+      <div class="ac-emoji">${activity.emoji}</div>
+      <div class="ac-name">${activity.label}</div>
+      <div class="ac-cost">Coût : <span>${activity.cost} unités</span>${activity.moneyCost ? ` + ${activity.moneyCost}$` : ''}</div>
+      <div class="ac-effect">${activity.description}</div>
+      ${activity.isTrap ? '<span class="ac-trap-label">⚠️ PIÈGE POTENTIEL</span>' : ''}
+      ${!meetsReq ? '<div style="font-size:10px;color:#A32D2D;margin-top:4px;">Stats insuffisantes</div>' : ''}
+    `;
+
+    if ((canAfford || isSelected) && meetsReq) {
+      card.addEventListener('click', () => onActivityToggle(activity.id));
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+function onActivityToggle(activityId) {
+  const result = toggleActivity(activityId);
+  if (!result.success) {
+    // Feedback discret — pas de popup intrusive
+    const card = [...document.querySelectorAll('.activity-card')]
+      .find(c => c.querySelector('.ac-name')?.textContent ===
+        FREE_TIME_ACTIVITIES.find(a => a.id === activityId)?.label);
+    if (card) {
+      card.style.borderColor = '#DC2626';
+      setTimeout(() => card.style.borderColor = '', 800);
+    }
+    return;
+  }
+  weeklyState = getWeeklyState();
+  renderTimeSection();
+  updateSubmitButton();
+}
+
+// ─── SECTION ÉVÉNEMENT ──────────────────────────────────────────────────────
+function renderEventSection() {
+  const event  = getCurrentEvent();
+  const body   = document.getElementById('eventBody');
+
+  if (!event) {
+    body.innerHTML = `<div style="text-align:center; padding:20px; color:#9CA3AF; font-size:13px;">
+      Aucun événement cette semaine. Profite de la tranquillité!
+    </div>`;
+    return;
+  }
+
+  const typeColors = {
+    opportunite: { bg:'#EAF3DE', color:'#3B6D11', label:'Opportunité' },
+    malchance:   { bg:'#FCEBEB', color:'#A32D2D', label:'Malchance'   },
+    dilemme:     { bg:'#FAEEDA', color:'#854F0B', label:'Dilemme'     },
+    rencontre:   { bg:'#EEEDFE', color:'#534AB7', label:'Rencontre'   },
+    garanti:     { bg:'#E6F1FB', color:'#185FA5', label:'Événement garanti' }
+  };
+  const tc = typeColors[event.type] || typeColors['opportunite'];
+
+  let choicesHTML = '';
+  if (event.choices && event.choices.length > 0) {
+    choicesHTML = event.choices.map(choice => {
+      const cons = choice.consequences || {};
+      // Formatter les conséquences en texte lisible
+      const parts = [];
+      if (cons.money)     parts.push(`<span class="${cons.money > 0 ? 'pos' : 'neg'}">${cons.money > 0 ? '+' : ''}${cons.money} $</span>`);
+      if (cons.xp)        parts.push(`<span class="${cons.xp > 0 ? 'pos' : 'neg'}">${cons.xp > 0 ? '+' : ''}${cons.xp} XP</span>`);
+      if (cons.stats) {
+        Object.entries(cons.stats).forEach(([stat, ch]) => {
+          const NAMES = {sante:'Santé',connaissances:'Con.',habiletes:'Hab.',organisation:'Org.',influence:'Inf.'};
+          const n = NAMES[stat] || stat;
+          if (ch.perm) parts.push(`<span class="${ch.perm > 0 ? 'pos' : 'neg'}">${ch.perm > 0 ? '+' : ''}${ch.perm} ${n} (perm.)</span>`);
+          if (ch.temp) parts.push(`<span class="${ch.temp > 0 ? 'pos' : 'neg'}">${ch.temp > 0 ? '+' : ''}${ch.temp} ${n} (${ch.weeks} sem.)</span>`);
+        });
+      }
+      if (cons.moneyLost === 'weekSalary') parts.push(`<span class="neg">−salaire de la semaine</span>`);
+      const consText = parts.length > 0 ? parts.join(' · ') : '<span style="color:#9CA3AF;">Aucun effet immédiat</span>';
+
+      return `
+        <div class="event-choice ${playerData.weeklyEventDone ? 'done' : ''}"
+             data-choice="${choice.id}">
+          <div class="ec-letter">${choice.id}</div>
+          <div class="ec-body">
+            <div class="ec-label">${choice.emoji || ''} ${choice.label}</div>
+            <div class="ec-result">${consText}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  body.innerHTML = `
+    <div class="event-card">
+      <div class="event-header">
+        <div class="event-emoji-big">${event.emoji}</div>
+        <div>
+          <span class="event-type-tag" style="background:${tc.bg}; color:${tc.color};">
+            ${tc.label}
+          </span>
+          <div class="event-title-text">${event.title}</div>
+        </div>
+      </div>
+      <div class="event-choices" id="eventChoices">
+        ${choicesHTML}
+        <div class="event-done-banner ${playerData.weeklyEventDone ? 'visible' : ''}" id="eventDoneBanner">
+          ✓ Choix enregistré — ton bilan s'affichera quand tu soumets ta semaine.
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Écouter les clics sur les choix
+  document.querySelectorAll('.event-choice').forEach(el => {
+    el.addEventListener('click', () => {
+      if (playerData.weeklyEventDone) return;
+      const choiceId = el.dataset.choice;
+      const result   = resolveEvent(choiceId);
+      if (!result) return;
+
+      playerData = getPlayerData();
+
+      // Feedback visuel
+      document.querySelectorAll('.event-choice').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('eventDoneBanner').classList.add('visible');
+
+      updateSubmitButton();
+    });
+  });
+}
+
+// ─── BOUTON SOUMETTRE ────────────────────────────────────────────────────────
+function updateSubmitButton() {
+  const btn = document.getElementById('btnSubmit');
+  // Activer dès qu'un emploi est sélectionné (l'événement est optionnel)
+  btn.disabled = !playerData.rpgJob;
+}
+
+document.getElementById('btnSubmit').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.textContent = 'Calcul en cours…';
+
+  try {
+    const effects = await submitWeek();
+    showResults(effects);
+  } catch(e) {
+    console.error('[Weekly] Erreur soumission:', e);
+    btn.disabled  = false;
+    btn.textContent = 'Terminer ma semaine →';
+    alert('Erreur lors de la sauvegarde. Réessaie.');
+  }
+});
+
+// ─── MODAL RÉSULTATS ─────────────────────────────────────────────────────────
+function showResults(effects) {
+  const p = getPlayerData();
+
+  // Delta argent
+  const delta     = effects.moneyDelta || 0;
+  const newBal    = p.celiBalance;
+  const deltaEl   = document.getElementById('rmDeltaAmount');
+  const sign      = delta >= 0 ? '+' : '';
+  deltaEl.textContent = `${sign}${Math.abs(delta).toLocaleString('fr-CA', {minimumFractionDigits:2})} $`;
+  deltaEl.className   = 'rm-delta-amount' + (delta < 0 ? ' negative' : '');
+
+  document.getElementById('rmNewBalance').textContent =
+    newBal.toLocaleString('fr-CA', {minimumFractionDigits:2}) + ' $';
+
+  document.getElementById('rmWeekNum').textContent =
+    `Semaine ${playerData.rpgWeek - 1} terminée`;
+
+  // XP
+  const xpIn  = p.rpgXP % 1000;
+  const xpPct = Math.round(xpIn / 1000 * 100);
+  document.getElementById('rmXpLabel').textContent = `${xpIn} / 1 000 XP`;
+  setTimeout(() => {
+    document.getElementById('rmXpFill').style.width = xpPct + '%';
+  }, 200);
+
+  // Level up
+  if (effects.newLevel) {
+    document.getElementById('levelupBanner').classList.add('visible');
+    document.getElementById('luNewLevel').textContent = effects.newLevel;
+  }
+
+  // Messages
+  const msgContainer = document.getElementById('rmMessages');
+  msgContainer.innerHTML = '';
+  (effects.messages || []).forEach(msg => {
+    const div = document.createElement('div');
+    div.className = `rm-msg ${msg.type || ''}`;
+    const icons = {
+      income: '💰', expense: '💸', tips: '🪙', event: '⚡',
+      levelup: '🎉', statup: '✨', bonus: '⭐', freepoints: '🌿'
+    };
+    div.textContent = (icons[msg.type] || '•') + ' ' + msg.text;
+    msgContainer.appendChild(div);
+  });
+
+  // Afficher la modal
+  document.getElementById('resultsOverlay').classList.add('visible');
+}
+
+document.getElementById('btnNextWeek').addEventListener('click', () => {
+  window.location.href = 'student-dashboard.html';
+});
+
+</script>
+</body>
+</html>
