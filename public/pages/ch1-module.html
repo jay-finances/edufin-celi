@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ÉduFin — Chapitre 1 : La consommation</title>
+<script type="module" src="../js/firebase-init.js"></script>
+<style>
+/* ── Reset & tokens ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #F7F5F0;
+  --surface:    #FFFFFF;
+  --border:     #E4DFD5;
+  --text:       #1C1A16;
+  --muted:      #7A7367;
+  --accent:     #C9501A;       /* brique chaude — finances / valeur */
+  --accent-lt:  #F4E8E1;
+  --green:      #2A7A4B;
+  --green-lt:   #E3F4EB;
+  --amber:      #B07A12;
+  --amber-lt:   #FBF3DC;
+  --lock:       #C5BFB4;
+  --lock-bg:    #F0EDE8;
+  --radius:     10px;
+  --shadow:     0 2px 12px rgba(0,0,0,0.07);
+  --font:       system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:  'Courier New', monospace;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+.page-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.page-header {
+  background: var(--text);
+  color: #fff;
+  padding: 20px 24px 18px;
+  margin-bottom: 28px;
+  border-radius: 0 0 var(--radius) var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.page-header .ch-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.page-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.page-header p {
+  font-size: 13px;
+  opacity: .65;
+  margin-top: 2px;
+}
+
+/* ── Progress bar ────────────────────────────────────────── */
+.progress-bar-wrap {
+  background: var(--border);
+  border-radius: 20px;
+  height: 8px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 20px;
+  transition: width .5s ease;
+}
+.progress-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── Section card ────────────────────────────────────────── */
+.section-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: border-color .2s;
+}
+.section-card.active  { border-color: var(--accent); }
+.section-card.locked  { opacity: .6; }
+.section-card.done    { border-color: var(--green); }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+.section-header:hover { background: var(--accent-lt); }
+.section-card.locked .section-header { cursor: default; }
+.section-card.locked .section-header:hover { background: transparent; }
+
+.section-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.section-meta { flex: 1; }
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+.section-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.section-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: .04em;
+  flex-shrink: 0;
+}
+.badge-locked  { background: var(--lock-bg);  color: var(--lock); }
+.badge-active  { background: var(--accent-lt); color: var(--accent); }
+.badge-done    { background: var(--green-lt);  color: var(--green); }
+
+.section-body {
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--border);
+  display: none;
+}
+.section-card.active .section-body,
+.section-card.done .section-body.forced { display: block; }
+
+/* ── Content prose ───────────────────────────────────────── */
+.content-prose {
+  padding: 16px 0 20px;
+  font-size: 14.5px;
+  line-height: 1.75;
+}
+.content-prose p    { margin-bottom: 10px; }
+.content-prose ul,
+.content-prose ol   { margin: 8px 0 12px 20px; }
+.content-prose li   { margin-bottom: 4px; }
+.content-prose h4   { font-size: 14px; font-weight: 700; margin: 14px 0 6px; color: var(--accent); }
+.content-prose strong { color: var(--text); }
+
+/* ── Questions ───────────────────────────────────────────── */
+.questions-wrap { border-top: 1px dashed var(--border); padding-top: 16px; }
+.questions-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.question-block {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.question-block.answered { pointer-events: none; }
+
+.question-text {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* MCQ */
+.mcq-options { display: flex; flex-direction: column; gap: 8px; }
+.mcq-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+  font-family: var(--font);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+.mcq-btn:hover:not(:disabled) { background: var(--accent-lt); border-color: var(--accent); }
+.mcq-btn .opt-key {
+  min-width: 24px; height: 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.mcq-btn.correct { background: var(--green-lt); border-color: var(--green); color: var(--green); }
+.mcq-btn.incorrect { background: #FCE8E8; border-color: #C94040; color: #C94040; }
+.mcq-btn.revealed { background: var(--green-lt); border-color: var(--green); color: var(--green); }
+
+/* True / False */
+.tf-options { display: flex; gap: 10px; }
+.tf-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .12s;
+  font-family: var(--font);
+  color: var(--text);
+}
+.tf-btn:hover:not(:disabled) { background: var(--accent-lt); border-color: var(--accent); }
+.tf-btn.correct   { background: var(--green-lt); border-color: var(--green); color: var(--green); }
+.tf-btn.incorrect { background: #FCE8E8; border-color: #C94040; color: #C94040; }
+.tf-btn.revealed  { background: var(--green-lt); border-color: var(--green); color: var(--green); }
+
+/* Match */
+.match-wrap { display: flex; flex-direction: column; gap: 6px; }
+.match-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.match-term {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.match-arrow { color: var(--muted); font-size: 14px; }
+.match-select {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: var(--surface);
+  font-family: var(--font);
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+}
+.match-select:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+.match-select.correct { border-color: var(--green); background: var(--green-lt); color: var(--green); }
+.match-select.incorrect { border-color: #C94040; background: #FCE8E8; color: #C94040; }
+.match-submit {
+  margin-top: 8px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  font-family: var(--font);
+}
+.match-submit:hover { background: #A83F12; }
+
+/* Feedback */
+.feedback-box {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.55;
+  display: none;
+}
+.feedback-box.show { display: block; }
+.feedback-box.ok  { background: var(--green-lt); border-left: 3px solid var(--green); color: #1A5030; }
+.feedback-box.err { background: #FCE8E8; border-left: 3px solid #C94040; color: #7A1818; }
+.feedback-icon { font-weight: 700; margin-right: 4px; }
+
+/* Section CTA */
+.section-cta {
+  margin-top: 16px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  display: none;
+  transition: background .15s;
+  font-family: var(--font);
+}
+.section-cta:hover { background: #A83F12; }
+.section-cta.show { display: block; }
+
+/* ── Quiz final ──────────────────────────────────────────── */
+.quiz-final-card {
+  background: var(--text);
+  border-radius: var(--radius);
+  padding: 24px 20px 20px;
+  color: #fff;
+  margin-top: 28px;
+  display: none;
+}
+.quiz-final-card.show { display: block; }
+.quiz-final-card h2 {
+  font-size: 17px;
+  margin-bottom: 4px;
+}
+.quiz-final-card p {
+  font-size: 13px;
+  opacity: .65;
+  margin-bottom: 18px;
+}
+.quiz-start-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background .15s;
+}
+.quiz-start-btn:hover { background: #A83F12; }
+
+/* Quiz questions overlay */
+.quiz-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(28,26,22,.85);
+  z-index: 100;
+  overflow-y: auto;
+  padding: 24px 16px 60px;
+}
+.quiz-overlay.show { display: block; }
+.quiz-inner {
+  max-width: 640px;
+  margin: 0 auto;
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.quiz-top {
+  background: var(--text);
+  color: #fff;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.quiz-top h3 { font-size: 15px; }
+.quiz-counter { font-size: 12px; opacity: .6; }
+.quiz-progress {
+  height: 4px;
+  background: #3a3830;
+}
+.quiz-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width .3s;
+}
+.quiz-q-wrap { padding: 20px; }
+
+/* Score screen */
+.score-screen { padding: 32px 24px; text-align: center; display: none; }
+.score-screen.show { display: block; }
+.score-circle {
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  background: var(--accent-lt);
+  border: 3px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+  flex-direction: column;
+}
+.score-num { font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1; }
+.score-den { font-size: 13px; color: var(--muted); }
+.score-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.score-msg   { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+.score-rewards {
+  display: flex; gap: 12px; justify-content: center; margin-bottom: 20px;
+}
+.reward-chip {
+  background: var(--amber-lt);
+  border: 1px solid var(--amber);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--amber);
+}
+.score-close {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+/* ── Toast ───────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all .3s;
+  z-index: 200;
+  white-space: nowrap;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── XP / money HUD ──────────────────────────────────────── */
+.hud {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.hud-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.hud-chip span { color: var(--text); }
+
+@media (max-width: 480px) {
+  .match-row { grid-template-columns: 1fr; }
+  .match-arrow { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Page ─────────────────────────────────────────────── -->
+<div class="page-wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="ch-badge">Chapitre 1</div>
+      <h1>Le phénomène de la consommation</h1>
+      <p>Lis chaque section · Réponds aux questions · Débloque la suite</p>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-chip">⚡ XP <span id="hud-xp">0</span></div>
+    <div class="hud-chip">💰 <span id="hud-money">0 $</span></div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-label">
+    <span id="prog-label">Progression</span>
+    <span id="prog-pct">0 %</span>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="prog-bar" style="width:0%"></div>
+  </div>
+
+  <!-- Sections générées par JS -->
+  <div id="sections-container"></div>
+
+  <!-- Quiz final -->
+  <div class="quiz-final-card" id="quiz-final-card">
+    <h2>🏆 Quiz final — Chapitre 1</h2>
+    <p>10 questions de synthèse · Gagne XP + argent pour ton personnage</p>
+    <button class="quiz-start-btn" id="quiz-start-btn">Commencer le quiz →</button>
+  </div>
+
+</div>
+
+<!-- ── Quiz overlay ──────────────────────────────────────── -->
+<div class="quiz-overlay" id="quiz-overlay">
+  <div class="quiz-inner">
+    <div class="quiz-top">
+      <h3>Quiz — Chapitre 1</h3>
+      <span class="quiz-counter" id="quiz-counter">1 / 10</span>
+    </div>
+    <div class="quiz-progress">
+      <div class="quiz-progress-fill" id="quiz-prog" style="width:0%"></div>
+    </div>
+    <div class="quiz-q-wrap" id="quiz-q-wrap">
+      <!-- question injectée -->
+    </div>
+
+    <!-- Score screen -->
+    <div class="score-screen" id="score-screen">
+      <div class="score-circle">
+        <div class="score-num" id="sc-num">0</div>
+        <div class="score-den" id="sc-den">/ 10</div>
+      </div>
+      <div class="score-title" id="sc-title">Résultat</div>
+      <div class="score-msg"   id="sc-msg"></div>
+      <div class="score-rewards" id="sc-rewards"></div>
+      <button class="score-close" id="sc-close">Retour au chapitre</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ── Data ─────────────────────────────────────────────── -->
+<script>
+/* ───────────────────────────────────────────────────────────
+   DONNÉES INLINE (ch1-data.js condensé)
+   En production : remplacer par <script src="ch1-data.js">
+──────────────────────────────────────────────────────────── */
+function rubric2(opLabel,c1,c0){return{type:"simple",opLabel,maxPoints:1,levels:[{points:"1 point",condition:c1},{points:"0 point",condition:c0}]};}
+function rubric3(opLabel,c2,c1,c0){return{type:"simple",opLabel,maxPoints:2,levels:[{points:"2 points",condition:c2},{points:"1 point",condition:c1},{points:"0 point",condition:c0}]};}
+
+const R_CONCEPT_1PT  = rubric2("Identifier un concept","L'élève identifie correctement le concept.","L'élève n'identifie pas correctement le concept.");
+const R_DISTINCTION_2PT = rubric3("Distinguer deux concepts","L'élève distingue correctement les deux concepts.","L'élève distingue partiellement les deux concepts.","L'élève confond les deux concepts.");
+const R_APPLICATION_2PT = rubric3("Appliquer une notion","L'élève applique correctement la notion à la situation.","L'élève applique partiellement la notion.","L'élève n'applique pas la notion correctement.");
+const R_ANALYSE_2PT  = rubric3("Analyser une situation","L'élève analyse correctement la situation.","L'élève analyse partiellement la situation.","L'élève n'analyse pas correctement la situation.");
+const R_PROCESSUS_2PT= rubric3("Appliquer le processus d'achat","L'élève applique correctement les étapes du processus.","L'élève applique partiellement les étapes.","L'élève n'applique pas les étapes du processus.");
+const R_JUGEMENT_2PT = rubric3("Porter un jugement","L'élève porte un jugement fondé sur des concepts vus.","L'élève porte un jugement partiellement fondé.","L'élève ne fonde pas son jugement.");
+const R_CAUSES_2PT   = rubric3("Déterminer des causes","L'élève détermine correctement les causes.","L'élève détermine partiellement les causes.","L'élève ne détermine pas les causes.");
+
+const SECTIONS = [
+  {
+    id:"s1", title:"La société de consommation", icon:"🛒", xpReward:30, moneyReward:0,
+    content:`<p>La <strong>consommation</strong> désigne l'acte d'acheter ou d'utiliser des biens et des services pour satisfaire des besoins — vitaux, culturels ou liés au confort.</p><p>Depuis la <strong>Deuxième Guerre mondiale</strong>, les sociétés occidentales se sont transformées en <em>sociétés de consommation</em>. Cette transformation repose sur <strong>3 piliers</strong> :</p><ul><li>🏦 La croissance du <strong>pouvoir d'achat</strong> de la classe moyenne (Trente Glorieuses, 1945-1975)</li><li>🏢 La glorification du <strong>système capitaliste</strong> et de la grande entreprise</li><li>💳 L'accès facile au <strong>crédit</strong>, qui favorise l'endettement</li></ul><p>Le <strong>fordisme</strong> — production de masse standardisée — a démocratisé l'accès aux biens. Le <strong>consumérisme</strong> désigne l'approche de « vivre pour consommer ».</p>`,
+    questions:[
+      {id:"s1q1",type:"mcq",text:"Que désigne le terme « société de consommation »?",options:["Un pays où l'État contrôle tous les achats","L'ensemble des pays développés qui connaissent l'abondance des biens depuis 1945","Une société où on ne peut acheter que le nécessaire","Un système où seules les entreprises consomment"],correct:1,feedback:"Exact ! La société de consommation désigne les pays développés qui, depuis la fin de la 2e Guerre mondiale, connaissent l'abondance des biens, services et loisirs — rendue possible par la croissance du pouvoir d'achat de la classe moyenne."},
+      {id:"s1q2",type:"tf",text:"Le crédit facile est l'un des 3 piliers de la société de consommation.",correct:true,feedback:"Vrai ! Les 3 piliers sont : 1) la croissance du pouvoir d'achat (classe moyenne), 2) le système capitaliste et la grande entreprise, 3) l'accès facile au crédit. Ce dernier favorise l'endettement et stimule la consommation."},
+      {id:"s1q3",type:"mcq",text:"Le « consumérisme » désigne :",options:["La protection des droits des consommateurs","Le mouvement écologique contre la surconsommation","L'approche de vivre pour consommer","L'étude scientifique des habitudes d'achat"],correct:2,feedback:"Exact ! Le consumérisme, c'est l'approche de « vivre pour consommer » — une forme de compensation psychologique où l'on consomme pour se sentir intégré et s'aligner sur une norme de réussite."}
+    ]
+  },
+  {
+    id:"s2", title:"Les besoins et la pyramide de Maslow", icon:"🔺", xpReward:30, moneyReward:0,
+    content:`<p>Abraham <strong>Maslow</strong> (1908-1970) classe les besoins humains en <strong>5 niveaux</strong> :</p><ol><li>🍎 <strong>Physiologiques</strong> — manger, dormir, se loger</li><li>🔒 <strong>Sécurité</strong> — emploi stable, logement durable</li><li>👥 <strong>Appartenance</strong> — amour, amitié, famille</li><li>⭐ <strong>Estime</strong> — reconnaissance, statut social</li><li>🌟 <strong>Accomplissement</strong> — réalisation de soi</li></ol><p><strong>Règle centrale :</strong> un besoin supérieur ne peut être satisfait que si les précédents le sont.</p><p>Les <strong>GAFAM</strong> (Google, Apple, Facebook/Meta, Amazon, Microsoft) ont numérisé et accéléré tous ces niveaux. Le <em>capitalisme de surveillance</em> : ils collectent nos données pour prédire et influencer nos comportements d'achat.</p>`,
+    questions:[
+      {id:"s2q1",type:"match",text:"Associe chaque besoin à son bon niveau dans la pyramide de Maslow :",pairs:[{term:"Se nourrir et dormir",def:"Besoins physiologiques"},{term:"Avoir un emploi stable",def:"Besoins de sécurité"},{term:"Avoir des amis",def:"Besoins d'appartenance"},{term:"Être reconnu socialement",def:"Besoins d'estime"}],feedback:"Les besoins physiologiques sont à la base (survie immédiate), puis sécurité, appartenance, estime et accomplissement. Chaque niveau doit être satisfait avant de chercher le suivant."},
+      {id:"s2q2",type:"mcq",text:"Le terme « capitalisme de surveillance » désigne :",options:["Un État qui surveille les dépenses de ses citoyens","Le mode de fonctionnement des géants tech qui collectent nos données pour prédire nos comportements","Un système où les caméras de surveillance sont partout dans les magasins","La surveillance des marchés financiers par les gouvernements"],correct:1,feedback:"Exact ! Théorisé par Shoshana Zuboff, le capitalisme de surveillance désigne la pratique des GAFAM qui recueillent d'immenses quantités de données et développent des algorithmes capables de prédire — et d'influencer — ce qui nous plaît."},
+      {id:"s2q3",type:"tf",text:"Selon Maslow, on peut satisfaire un besoin d'estime même si nos besoins physiologiques ne sont pas comblés.",correct:false,feedback:"Faux ! C'est la règle centrale de Maslow : les manques au niveau des besoins essentiels ne libèrent pas l'énergie nécessaire pour poursuivre les besoins supérieurs."}
+    ]
+  },
+  {
+    id:"s3", title:"L'identité au cœur de la consommation", icon:"🪞", xpReward:35, moneyReward:0,
+    content:`<p>La consommation est devenue un <strong>outil de construction identitaire</strong>. On ne consomme plus seulement par besoin — on consomme pour <em>exister socialement</em>.</p><h4>Trois penseurs clés</h4><p>🎩 <strong>Veblen</strong> — <em>Consommation ostentatoire</em> : acheter des biens coûteux pour afficher son statut social. Un acte performatif.</p><p>🪞 <strong>Girard</strong> — <em>Désir mimétique</em> : on désire ce que les autres désirent. Les réseaux sociaux amplifient massivement ce phénomène.</p><p>📚 <strong>Bourdieu</strong> — <em>Habitus</em> : nos goûts sont façonnés dès l'enfance par notre milieu social — souvent de façon inconsciente.</p><h4>Phénomènes à retenir</h4><p>👗 <strong>Fast fashion</strong> : renouvellement incessant des collections pour accélérer les cycles d'achat.</p><p>🛍️ <strong>Retail therapy</strong> : acheter pour améliorer son humeur ou contrer le stress. Effets essentiellement à court terme.</p>`,
+    questions:[
+      {id:"s3q1",type:"mcq",text:"Kenza achète les mêmes chaussures que son amie, soudainement désirables depuis que son amie les a. Quel concept explique ce comportement?",options:["La consommation ostentatoire (Veblen)","Le désir mimétique (Girard)","L'habitus (Bourdieu)","La retail therapy"],correct:1,feedback:"Exact ! Le désir mimétique de Girard : on désire ce que les autres désirent, non pour l'objet lui-même, mais parce que l'autre le rend désirable."},
+      {id:"s3q2",type:"tf",text:"La « fast fashion » est néfaste uniquement d'un point de vue financier.",correct:false,feedback:"Faux ! La fast fashion est néfaste financièrement (gruge le revenu disponible) ET écologiquement (production massive, déchets textiles, conditions de travail précaires)."},
+      {id:"s3q3",type:"match",text:"Associe chaque penseur à son concept clé :",pairs:[{term:"Veblen",def:"Consommation ostentatoire"},{term:"Girard",def:"Désir mimétique"},{term:"Bourdieu",def:"Habitus"},{term:"Zuboff",def:"Capitalisme de surveillance"}],feedback:"Ces 4 penseurs forment un tableau complet : Veblen (statut), Girard (imitation), Bourdieu (classe sociale), Zuboff (données numériques)."},
+      {id:"s3q4",type:"mcq",text:"Alexis stresse avant ses examens et fait du shopping en ligne pour se sentir mieux, sans besoin réel. Ce comportement s'appelle :",options:["L'habitus","La consommation ostentatoire","La retail therapy","Le mimétisme social"],correct:2,feedback:"La retail therapy : acheter de façon non planifiée pour améliorer son humeur. Effets à court terme, mais peut mener à des habitudes impulsives et à l'endettement."}
+    ]
+  },
+  {
+    id:"s4", title:"Ce qui influence nos choix", icon:"⚖️", xpReward:30, moneyReward:0,
+    content:`<p>Nos habitudes de consommation sont influencées par deux grands types de facteurs :</p><h4>Facteurs économiques</h4><ul><li>💵 <strong>Revenu disponible</strong> = revenus − impôts − cotisations + transferts sociaux</li><li>🏷️ <strong>Prix</strong> — permet de classifier les biens</li><li>📈 <strong>Pouvoir d'achat</strong> — capacité réelle de payer</li></ul><h4>Facteurs socioculturels</h4><ul><li>🎂 <strong>L'âge</strong> — nos besoins évoluent tout au long de la vie</li><li>👥 <strong>La classe sociale</strong> — habitus (Bourdieu)</li><li>📱 <strong>Les GAFAM et la publicité</strong> — création artificielle de besoins</li><li>🌱 <strong>Les valeurs personnelles</strong> — écologisme, minimalisme</li></ul><p>⚠️ L'<strong>IPC</strong> (Indice des prix à la consommation) mesure la fluctuation des prix. Pour maintenir son pouvoir d'achat, un salaire doit augmenter au même rythme que l'inflation.</p>`,
+    questions:[
+      {id:"s4q1",type:"mcq",text:"Le revenu disponible se calcule ainsi :",options:["Salaire brut − loyer − nourriture","Revenus − impôts − cotisations sociales + transferts sociaux","Salaire net − épargne","Revenus − toutes les dépenses mensuelles"],correct:1,feedback:"Revenu disponible = revenus − impôts − cotisations + transferts sociaux. C'est ce montant qui peut être consommé ou épargné."},
+      {id:"s4q2",type:"tf",text:"L'IPC (Indice des prix à la consommation) mesure la fluctuation générale des prix d'une année à l'autre.",correct:true,feedback:"Vrai ! L'IPC mesure l'inflation. Pour maintenir son pouvoir d'achat, un salaire doit augmenter au minimum au même rythme que l'IPC."},
+      {id:"s4q3",type:"match",text:"Classe chaque facteur dans la bonne catégorie :",pairs:[{term:"Taux d'intérêt",def:"Facteur économique"},{term:"Influence des pairs",def:"Facteur socioculturel"},{term:"Revenu disponible",def:"Facteur économique"},{term:"Valeurs personnelles",def:"Facteur socioculturel"}],feedback:"Facteurs économiques : pouvoir d'achat, prix, taux d'intérêt. Facteurs socioculturels : âge, classe sociale, pairs, valeurs, publicité."}
+    ]
+  },
+  {
+    id:"s5", title:"Consommer de manière réfléchie", icon:"🧠", xpReward:35, moneyReward:50,
+    content:`<p>Le consommateur québécois dispose de nombreuses <strong>ressources fiables</strong> :</p><ul><li>🏛️ <strong>OPC</strong> — droits, garanties, pratiques trompeuses</li><li>🧪 <strong>Protégez-Vous</strong> — tests comparatifs indépendants</li><li>📺 <strong>La Facture / L'Épicerie / J.E.</strong> — émissions de vigie citoyenne</li><li>💬 <strong>Forums</strong> (RedFlagDeals, etc.) — témoignages utilisateurs (à croiser)</li></ul><h4>Le processus d'achat réfléchi (6 étapes)</h4><ol><li>🎯 <strong>Déterminer son besoin</strong> — ai-je vraiment besoin de ce produit?</li><li>🔍 <strong>Rassembler l'information</strong> — sources fiables et indépendantes</li><li>⚖️ <strong>Évaluer les possibilités</strong> — comparer prix, qualité, garanties</li><li>✅ <strong>Prendre la décision</strong> — le crédit est-il vraiment nécessaire?</li><li>🛍️ <strong>Se procurer le bien</strong> — lire contrat, politique de retour</li><li>📋 <strong>Évaluer sa décision</strong> — conserver les preuves d'achat</li></ol><p>💡 <strong>Règle d'or :</strong> croiser les sources. Un seul avis (même du fabricant) n'est jamais suffisant.</p>`,
+    questions:[
+      {id:"s5q1",type:"mcq",text:"Léa consulte seulement le site d'Apple pour choisir son téléphone. Quelle erreur commet-elle?",options:["Elle n'a pas encore déterminé son besoin","Elle ne croise pas ses sources — le site du fabricant est biaisé (objectif marketing)","Elle devrait d'abord évaluer ses possibilités de crédit","Elle n'a pas regardé les forums"],correct:1,feedback:"Le site du fabricant est une bonne source pour les caractéristiques techniques, mais il vise aussi un objectif marketing. L'achat réfléchi exige de croiser les sources : OPC, Protégez-Vous, forums, etc."},
+      {id:"s5q2",type:"tf",text:"Conserver sa preuve d'achat est essentielle pour faire valoir ses droits en cas de problème.",correct:true,feedback:"Vrai ! La preuve d'achat est indispensable pour faire honorer une garantie légale ou du fabricant. C'est une des responsabilités clés du consommateur."},
+      {id:"s5q3",type:"match",text:"Place chaque action dans la bonne étape du processus d'achat :",pairs:[{term:"Comparer 3 offres de forfait cellulaire",def:"Évaluer les possibilités"},{term:"Se demander si on a besoin d'un nouvel ordi",def:"Déterminer son besoin"},{term:"Vérifier la politique de retour",def:"Se procurer le bien"},{term:"Garder sa facture en lieu sûr",def:"Évaluer sa décision"}],feedback:"Ces 6 étapes forment un processus complet. L'étape souvent oubliée : évaluer sa décision et conserver les documents — cruciale pour exercer ses droits."}
+    ]
+  }
+];
+
+const QUIZ_FINAL = [
+  {id:"qf1",type:"mcq",text:"Laquelle de ces périodes correspond aux « Trente Glorieuses »?",options:["1918-1948","1945-1975","1960-1990","1975-2005"],correct:1,feedback:"Les Trente Glorieuses (1945-1975) : période de forte croissance économique en Occident, durant laquelle la société de consommation s'est développée."},
+  {id:"qf2",type:"tf",text:"Le désir mimétique (Girard) explique qu'on désire les biens en raison de leurs qualités objectives.",correct:false,feedback:"Faux ! Selon Girard, on désire ce que les autres désirent — pas pour les qualités de l'objet, mais parce que l'autre le rend désirable."},
+  {id:"qf3",type:"mcq",text:"Thomas gagne 2 800 $/mois, paie 400 $ d'impôts et 200 $ de cotisations. Il reçoit 100 $ d'allocation. Quel est son revenu disponible?",options:["2 800 $","2 400 $","2 300 $","2 200 $"],correct:2,feedback:"Revenu disponible = 2 800 − 400 − 200 + 100 = 2 300 $. C'est ce montant qu'il peut consommer ou épargner."},
+  {id:"qf4",type:"mcq",text:"L'habitus de Bourdieu désigne :",options:["La tendance à acheter des produits de luxe","Les schémas durables de perception acquis dès l'enfance selon le milieu social","L'habitude de magasiner en ligne","Le comportement d'achat lié à l'humeur"],correct:1,feedback:"L'habitus : schémas durables acquis selon notre classe sociale, qui guident nos goûts et comportements — souvent de façon inconsciente."},
+  {id:"qf5",type:"tf",text:"L'OPC (Office de la protection du consommateur) est un organisme privé et indépendant.",correct:false,feedback:"Faux ! L'OPC est un organisme québécois public, créé en 1971 par le gouvernement du Québec pour informer et protéger les consommateurs."},
+  {id:"qf6",type:"mcq",text:"Sofia achète une robe à 250 $ qu'elle ne mettra qu'une fois, pour paraître au même niveau que ses collègues. Quel concept illustre ce comportement?",options:["Retail therapy","Désir mimétique","Consommation ostentatoire (Veblen)","Fast fashion"],correct:2,feedback:"Consommation ostentatoire (Veblen) : acheter pour afficher son statut social, un acte performatif pour confirmer sa position."},
+  {id:"qf7",type:"mcq",text:"Dans le processus d'achat réfléchi, quelle est la PREMIÈRE étape?",options:["Comparer les prix","Consulter l'OPC","Déterminer son besoin réel","Évaluer les modes de financement"],correct:2,feedback:"La première étape : déterminer son besoin. Ai-je vraiment besoin de ce produit? Ce questionnement initial est fondamental."},
+  {id:"qf8",type:"tf",text:"Les besoins de base selon Maslow comprennent l'estime de soi et la reconnaissance sociale.",correct:false,feedback:"Faux ! Les besoins de base (niveaux 1 et 2) sont les besoins physiologiques et les besoins de sécurité. L'estime est un besoin supérieur (niveau 4)."},
+  {id:"qf9",type:"mcq",text:"Les GAFAM influencent nos comportements d'achat principalement en :",options:["Fixant les prix des produits","Collectant nos données pour personnaliser la publicité et anticiper nos comportements","Produisant directement les biens de consommation","Imposant des taxes sur nos achats en ligne"],correct:1,feedback:"Les GAFAM collectent des milliards de données pour personnaliser la publicité et anticiper les comportements — c'est le capitalisme de surveillance."},
+  {id:"qf10",type:"mcq",text:"Un ami achète une garantie prolongée de 200 $ sur un laptop à 800 $. Pourquoi cette décision est-elle discutable?",options:["Les garanties prolongées sont illégales au Québec","La garantie légale couvre déjà une large part des situations sans frais supplémentaires","Il aurait dû choisir 5 ans plutôt que 3 ans","Les laptops ne brisent jamais les premières années"],correct:1,feedback:"La garantie légale (obligatoire et gratuite) couvre déjà de nombreuses situations. La garantie prolongée est souvent un moyen pour les détaillants de réaliser des profits supplémentaires."}
+];
+
+// ── État ─────────────────────────────────────────────────────
+const state = {
+  xp: 0,
+  money: 0,
+  sectionProgress: {}, // sid → { answered: Set, passed: bool }
+  unlockedIndex: 0,
+  quizStarted: false,
+  quizIndex: 0,
+  quizScore: 0,
+  quizAnswered: false
+};
+
+// ── Helpers ──────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const KEYS = ['A','B','C','D'];
+
+function showToast(msg, dur=2200) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function updateHUD() {
+  $('hud-xp').textContent = state.xp;
+  $('hud-money').textContent = state.money + ' $';
+
+  const total = SECTIONS.length;
+  const done  = Object.values(state.sectionProgress).filter(p => p.passed).length;
+  const pct   = Math.round((done / total) * 100);
+  $('prog-bar').style.width = pct + '%';
+  $('prog-pct').textContent = pct + ' %';
+  $('prog-label').textContent = `${done} / ${total} sections complétées`;
+}
+
+// ── Build sections ───────────────────────────────────────────
+function buildSections() {
+  const container = $('sections-container');
+  container.innerHTML = '';
+
+  SECTIONS.forEach((sec, idx) => {
+    const isUnlocked = idx <= state.unlockedIndex;
+    const prog       = state.sectionProgress[sec.id];
+    const isPassed   = prog?.passed;
+
+    const card = document.createElement('div');
+    card.className = 'section-card' + (isPassed ? ' done' : isUnlocked ? ' active' : ' locked');
+    card.id = 'card-' + sec.id;
+
+    const statusBadge = isPassed
+      ? '<span class="section-badge badge-done">✓ Complété</span>'
+      : isUnlocked
+        ? '<span class="section-badge badge-active">En cours</span>'
+        : '<span class="section-badge badge-locked">🔒 Verrouillé</span>';
+
+    card.innerHTML = `
+      <div class="section-header" onclick="toggleSection('${sec.id}', ${isUnlocked})">
+        <span class="section-icon">${sec.icon}</span>
+        <div class="section-meta">
+          <div class="section-title">${sec.title}</div>
+          <div class="section-subtitle">+${sec.xpReward} XP${sec.moneyReward > 0 ? ' · +'+sec.moneyReward+' $' : ''}</div>
+        </div>
+        ${statusBadge}
+      </div>
+      <div class="section-body" id="body-${sec.id}">
+        <div class="content-prose">${sec.content}</div>
+        <div class="questions-wrap">
+          <div class="questions-label">Questions de compréhension</div>
+          <div id="qs-${sec.id}"></div>
+        </div>
+        <button class="section-cta" id="cta-${sec.id}" onclick="completeSection('${sec.id}', ${idx})">
+          Continuer →
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+
+    // Si la section est active et déjà ouverte, construire les questions
+    if (isUnlocked) {
+      buildQuestions(sec);
+    }
+  });
+
+  // Ouvrir la section active
+  const activeSec = SECTIONS[Math.min(state.unlockedIndex, SECTIONS.length-1)];
+  if (!state.sectionProgress[activeSec.id]?.passed) {
+    const body = $('body-' + activeSec.id);
+    if (body) body.style.display = 'block';
+  }
+
+  // Quiz final
+  const allDone = SECTIONS.every(s => state.sectionProgress[s.id]?.passed);
+  const qfCard  = $('quiz-final-card');
+  if (allDone) qfCard.classList.add('show');
+}
+
+function toggleSection(sid, isUnlocked) {
+  if (!isUnlocked) return;
+  const body = $('body-' + sid);
+  body.style.display = body.style.display === 'none' || !body.style.display ? 'block' : 'none';
+  const sec = SECTIONS.find(s => s.id === sid);
+  if (sec) buildQuestions(sec);
+}
+
+// ── Build questions ──────────────────────────────────────────
+function buildQuestions(sec) {
+  const container = $('qs-' + sec.id);
+  if (!container || container.dataset.built) return;
+  container.dataset.built = '1';
+
+  const prog = state.sectionProgress[sec.id] || { answered: new Set(), passed: false };
+  state.sectionProgress[sec.id] = prog;
+
+  sec.questions.forEach(q => {
+    const block = document.createElement('div');
+    block.className = 'question-block';
+    block.id = 'qblock-' + q.id;
+
+    if (q.type === 'mcq')   block.innerHTML = buildMCQ(q);
+    if (q.type === 'tf')    block.innerHTML = buildTF(q);
+    if (q.type === 'match') block.innerHTML = buildMatch(q);
+
+    container.appendChild(block);
+  });
+
+  checkSectionCTA(sec);
+}
+
+function buildMCQ(q) {
+  const opts = q.options.map((o, i) =>
+    `<button class="mcq-btn" onclick="answerMCQ('${q.id}',${i},${q.correct},'${escQ(q.feedback)}')" id="opt-${q.id}-${i}">
+      <span class="opt-key">${KEYS[i]}</span>${o}
+    </button>`
+  ).join('');
+  return `<p class="question-text">${q.text}</p><div class="mcq-options">${opts}</div>
+          <div class="feedback-box" id="fb-${q.id}"></div>`;
+}
+
+function buildTF(q) {
+  return `<p class="question-text">${q.text}</p>
+    <div class="tf-options">
+      <button class="tf-btn" onclick="answerTF('${q.id}',true,${q.correct},'${escQ(q.feedback)}')" id="tf-${q.id}-true">✓ Vrai</button>
+      <button class="tf-btn" onclick="answerTF('${q.id}',false,${q.correct},'${escQ(q.feedback)}')" id="tf-${q.id}-false">✗ Faux</button>
+    </div>
+    <div class="feedback-box" id="fb-${q.id}"></div>`;
+}
+
+function buildMatch(q) {
+  const defs = [...q.pairs.map(p => p.def)].sort(() => Math.random() - .5);
+  const rows = q.pairs.map((p, i) => {
+    const opts = defs.map(d => `<option value="${d}">${d}</option>`).join('');
+    return `<div class="match-row">
+      <div class="match-term">${p.term}</div>
+      <span class="match-arrow">→</span>
+      <select class="match-select" id="ms-${q.id}-${i}">
+        <option value="">Choisir…</option>${opts}
+      </select>
+    </div>`;
+  }).join('');
+  return `<p class="question-text">${q.text}</p>
+    <div class="match-wrap">${rows}</div>
+    <button class="match-submit" onclick="answerMatch('${q.id}','${escQ(q.feedback)}')">Vérifier</button>
+    <div class="feedback-box" id="fb-${q.id}"></div>`;
+}
+
+// ── Answer handlers ──────────────────────────────────────────
+function answerMCQ(qid, chosen, correct, feedback) {
+  const block = $('qblock-' + qid);
+  if (block.classList.contains('answered')) return;
+  block.classList.add('answered');
+
+  for (let i = 0; i < 4; i++) {
+    const btn = $(`opt-${qid}-${i}`);
+    if (!btn) continue;
+    if (i === correct) btn.classList.add('correct');
+    else if (i === chosen) btn.classList.add('incorrect');
+    btn.disabled = true;
+  }
+  showFeedback(qid, chosen === correct, feedback);
+  markAnswered(qid, chosen === correct);
+}
+
+function answerTF(qid, chosen, correct, feedback) {
+  const block = $('qblock-' + qid);
+  if (block.classList.contains('answered')) return;
+  block.classList.add('answered');
+
+  const isRight = chosen === correct;
+  $(`tf-${qid}-true`).classList.add(correct === true ? 'revealed' : (chosen === true ? 'incorrect' : ''));
+  $(`tf-${qid}-false`).classList.add(correct === false ? 'revealed' : (chosen === false ? 'incorrect' : ''));
+  $(`tf-${qid}-true`).disabled = true;
+  $(`tf-${qid}-false`).disabled = true;
+
+  showFeedback(qid, isRight, feedback);
+  markAnswered(qid, isRight);
+}
+
+function answerMatch(qid, feedback) {
+  const q = [...SECTIONS.flatMap(s => s.questions)].find(q => q.id === qid);
+  if (!q) return;
+
+  const block = $('qblock-' + qid);
+  if (block.classList.contains('answered')) return;
+
+  let allCorrect = true;
+  q.pairs.forEach((p, i) => {
+    const sel = $(`ms-${qid}-${i}`);
+    if (!sel) return;
+    if (sel.value === p.def) { sel.classList.add('correct'); }
+    else { sel.classList.add('incorrect'); allCorrect = false; }
+    sel.disabled = true;
+  });
+
+  block.classList.add('answered');
+  showFeedback(qid, allCorrect, feedback);
+  markAnswered(qid, allCorrect);
+}
+
+function showFeedback(qid, isOk, text) {
+  const fb = $('fb-' + qid);
+  if (!fb) return;
+  fb.className = 'feedback-box show ' + (isOk ? 'ok' : 'err');
+  fb.innerHTML = `<span class="feedback-icon">${isOk ? '✓' : '✗'}</span>${text}`;
+}
+
+function markAnswered(qid, correct) {
+  // Trouver la section
+  for (const sec of SECTIONS) {
+    const q = sec.questions.find(q => q.id === qid);
+    if (q) {
+      const prog = state.sectionProgress[sec.id];
+      prog.answered.add(qid);
+      checkSectionCTA(sec);
+      break;
+    }
+  }
+}
+
+function checkSectionCTA(sec) {
+  const prog = state.sectionProgress[sec.id];
+  if (!prog) return;
+  const allAnswered = sec.questions.every(q => prog.answered.has(q.id));
+  const cta = $('cta-' + sec.id);
+  if (cta && allAnswered && !prog.passed) cta.classList.add('show');
+}
+
+function completeSection(sid, idx) {
+  const sec = SECTIONS[idx];
+  const prog = state.sectionProgress[sid];
+  if (!prog || prog.passed) return;
+
+  prog.passed = true;
+  state.xp     += sec.xpReward;
+  state.money  += sec.moneyReward;
+
+  if (idx + 1 < SECTIONS.length) state.unlockedIndex = idx + 1;
+  updateHUD();
+  showToast(`+${sec.xpReward} XP gagnés !`);
+
+  setTimeout(() => {
+    buildSections();
+    // Scroll vers section suivante
+    const nextCard = $('card-' + SECTIONS[Math.min(idx+1, SECTIONS.length-1)].id);
+    if (nextCard) nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 600);
+}
+
+// ── Quiz final ───────────────────────────────────────────────
+$('quiz-start-btn').onclick = startQuiz;
+
+function startQuiz() {
+  state.quizIndex = 0;
+  state.quizScore = 0;
+  $('quiz-overlay').classList.add('show');
+  $('score-screen').classList.remove('show');
+  $('quiz-q-wrap').style.display = 'block';
+  renderQuizQ();
+}
+
+function renderQuizQ() {
+  const q   = QUIZ_FINAL[state.quizIndex];
+  const pct = (state.quizIndex / QUIZ_FINAL.length) * 100;
+  $('quiz-counter').textContent = `${state.quizIndex + 1} / ${QUIZ_FINAL.length}`;
+  $('quiz-prog').style.width = pct + '%';
+  state.quizAnswered = false;
+
+  const wrap = $('quiz-q-wrap');
+  wrap.innerHTML = '';
+
+  const block = document.createElement('div');
+  block.className = 'question-block';
+
+  if (q.type === 'mcq')   block.innerHTML = buildQuizMCQ(q);
+  if (q.type === 'tf')    block.innerHTML = buildQuizTF(q);
+
+  wrap.appendChild(block);
+}
+
+function buildQuizMCQ(q) {
+  const opts = q.options.map((o, i) =>
+    `<button class="mcq-btn" onclick="quizAnswerMCQ(${i},${q.correct},'${escQ(q.feedback)}')" id="qopt-${i}">
+      <span class="opt-key">${KEYS[i]}</span>${o}
+    </button>`
+  ).join('');
+  return `<p class="question-text">${q.text}</p><div class="mcq-options">${opts}</div>
+          <div class="feedback-box" id="qfb"></div>
+          <div id="quiz-next-wrap" style="display:none;margin-top:12px;">
+            <button class="section-cta show" onclick="quizNext()" style="display:block">
+              ${state.quizIndex + 1 < QUIZ_FINAL.length ? 'Question suivante →' : 'Voir mon résultat →'}
+            </button>
+          </div>`;
+}
+
+function buildQuizTF(q) {
+  return `<p class="question-text">${q.text}</p>
+    <div class="tf-options">
+      <button class="tf-btn" onclick="quizAnswerTF(true,${q.correct},'${escQ(q.feedback)}')" id="qtf-true">✓ Vrai</button>
+      <button class="tf-btn" onclick="quizAnswerTF(false,${q.correct},'${escQ(q.feedback)}')" id="qtf-false">✗ Faux</button>
+    </div>
+    <div class="feedback-box" id="qfb"></div>
+    <div id="quiz-next-wrap" style="display:none;margin-top:12px;">
+      <button class="section-cta show" onclick="quizNext()" style="display:block">
+        ${state.quizIndex + 1 < QUIZ_FINAL.length ? 'Question suivante →' : 'Voir mon résultat →'}
+      </button>
+    </div>`;
+}
+
+function quizAnswerMCQ(chosen, correct, feedback) {
+  if (state.quizAnswered) return;
+  state.quizAnswered = true;
+  if (chosen === correct) state.quizScore++;
+  for (let i = 0; i < 4; i++) {
+    const btn = $('qopt-'+i);
+    if (!btn) continue;
+    if (i === correct) btn.classList.add('correct');
+    else if (i === chosen) btn.classList.add('incorrect');
+    btn.disabled = true;
+  }
+  const fb = $('qfb');
+  fb.className = 'feedback-box show ' + (chosen === correct ? 'ok' : 'err');
+  fb.innerHTML = `<span class="feedback-icon">${chosen === correct ? '✓' : '✗'}</span>${feedback}`;
+  $('quiz-next-wrap').style.display = 'block';
+  const nw = $('quiz-next-wrap').querySelector('button');
+  if (nw) nw.textContent = state.quizIndex + 1 < QUIZ_FINAL.length ? 'Question suivante →' : 'Voir mon résultat →';
+}
+
+function quizAnswerTF(chosen, correct, feedback) {
+  if (state.quizAnswered) return;
+  state.quizAnswered = true;
+  const isOk = chosen === correct;
+  if (isOk) state.quizScore++;
+  $('qtf-true').classList.add(correct === true ? 'revealed' : (chosen === true ? 'incorrect' : ''));
+  $('qtf-false').classList.add(correct === false ? 'revealed' : (chosen === false ? 'incorrect' : ''));
+  $('qtf-true').disabled = true;
+  $('qtf-false').disabled = true;
+  const fb = $('qfb');
+  fb.className = 'feedback-box show ' + (isOk ? 'ok' : 'err');
+  fb.innerHTML = `<span class="feedback-icon">${isOk ? '✓' : '✗'}</span>${feedback}`;
+  $('quiz-next-wrap').style.display = 'block';
+  const nw = $('quiz-next-wrap').querySelector('button');
+  if (nw) nw.textContent = state.quizIndex + 1 < QUIZ_FINAL.length ? 'Question suivante →' : 'Voir mon résultat →';
+}
+
+function quizNext() {
+  state.quizIndex++;
+  if (state.quizIndex < QUIZ_FINAL.length) {
+    renderQuizQ();
+  } else {
+    showScore();
+  }
+}
+
+function showScore() {
+  $('quiz-q-wrap').style.display = 'none';
+  const sc = $('score-screen');
+  sc.classList.add('show');
+
+  const score = state.quizScore;
+  const total = QUIZ_FINAL.length;
+  const pct   = score / total;
+
+  $('sc-num').textContent = score;
+  $('sc-den').textContent = '/ ' + total;
+  $('quiz-counter').textContent = `Résultats`;
+  $('quiz-prog').style.width = '100%';
+
+  let title, msg, xpBonus, moneyBonus;
+  if (pct >= .9)       { title = '🏆 Excellent !';    msg = 'Tu maîtrises le chapitre 1 sur la consommation.'; xpBonus = 100; moneyBonus = 200; }
+  else if (pct >= .7)  { title = '👍 Très bien !';    msg = 'Quelques notions à revoir, mais l\'essentiel est là.'; xpBonus = 70; moneyBonus = 150; }
+  else if (pct >= .5)  { title = '📚 Pas mal !';      msg = 'Reprends les sections où tu as hésité.'; xpBonus = 50; moneyBonus = 100; }
+  else                 { title = '💪 Continue !';     msg = 'Relis les sections du chapitre et réessaie.'; xpBonus = 25; moneyBonus = 50; }
+
+  $('sc-title').textContent = title;
+  $('sc-msg').textContent   = msg;
+  $('sc-rewards').innerHTML = `
+    <div class="reward-chip">+${xpBonus} XP</div>
+    <div class="reward-chip">+${moneyBonus} $</div>
+  `;
+
+  state.xp    += xpBonus;
+  state.money += moneyBonus;
+  updateHUD();
+  // ── Sauvegarder dans Firebase ──
+  try {
+    const { db, auth } = await import('../js/firebase-init.js');
+    const { doc, updateDoc, increment } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const uid = auth.currentUser?.uid;
+    if (uid) {
+      await updateDoc(doc(db, 'users', uid), {
+        rpgXP:       increment(xpBonus),
+        celiBalance: increment(moneyBonus),
+        [`ch1_quiz_score`]: score,
+        [`ch1_completed`]:  pct >= 0.6
+      });
+    }
+  } catch(e) {
+    console.warn('Firebase non disponible :', e.message);
+  }
+}
+
+$('sc-close').onclick = () => {
+  $('quiz-overlay').classList.remove('show');
+};
+
+// ── Utils ────────────────────────────────────────────────────
+function escQ(s) { return (s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+// ── Init ─────────────────────────────────────────────────────
+buildSections();
+updateHUD();
+</script>
+</body>
+</html>
